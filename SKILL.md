@@ -82,8 +82,15 @@ Footage lives wherever the user put it. All output goes in `<footage>/studio/`.
 
 Run in order. Two stop gates; do not run past them.
 
-**1 — Read state.** Read `taste.md` and `profile.yml` if they exist. Never
-regenerate an artifact that is already on disk.
+**1 — Read state.** Load the taste memory and profile before anything else:
+
+```bash
+python3 scripts/taste.py --studio <footage>/studio brief
+```
+
+Those instructions override the defaults in `rules/` — they are what this
+particular person has already corrected you on. Never regenerate an artifact
+that is already on disk.
 
 **2 — Inventory.** `ffprobe` every source. Note resolution, fps, duration,
 audio channels. Flag anything that will bite later (variable frame rate,
@@ -117,8 +124,21 @@ it, and a base-cut change invalidates all of them.
 
 **11 — Deliver the package.** See "Output".
 
-**12 — Learn.** Append any correction the user made to `taste.md` as a dated
-rule, phrased as an instruction for next time.
+**12 — Learn.** Record every correction the user made, phrased as an
+instruction for next time and filed under the area it affects:
+
+```bash
+python3 scripts/taste.py --studio <footage>/studio add captions \
+  "Start each caption 0.08s after the word is spoken, never before" \
+  --said "we show early for a sec then I start speaking"
+```
+
+Always pass `--said` with their actual words. The instruction is your reading
+of the feedback and can be wrong; keeping the original means a bad reading can
+be corrected later instead of quietly hardening into a rule.
+
+When a rule stops applying, retire it rather than deleting it —
+`taste.py retire <area> <n>` — so the reversal stays visible.
 
 ## Verify
 
@@ -176,3 +196,4 @@ the failure it prevents.
 - Auto-detecting the spoken language.
 - Presenting output you did not look at.
 - Adding a feature nobody asked for.
+- Finishing an edit without recording what the user corrected.
