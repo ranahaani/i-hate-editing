@@ -26,6 +26,12 @@ from pathlib import Path
 NON_LATIN = {"ur", "hi", "bn", "pa", "ta", "te", "mr", "gu", "kn", "ml",
              "fa", "ar", "he", "ru", "uk", "el", "zh", "ja", "ko", "th", "my", "am"}
 
+# Turbo models are distilled for transcription and have no translation
+# capability at all — asking one to translate silently returns the SOURCE
+# language, which then flows into captions as untranslated text. Verified
+# against large-v3-turbo: -tr returned Urdu, medium returned English.
+TRANSLATION_CAPABLE = ("large-v3", "large-v2", "large", "medium", "small", "base")
+
 MODEL_DIRS = [
     Path.home() / ".cache/whisper",
     Path.home() / ".cache/hyperframes/whisper/models",
@@ -37,6 +43,18 @@ MODEL_DIRS = [
 def die(msg, code=1):
     print(f"error: {msg}", file=sys.stderr)
     sys.exit(code)
+
+
+def translation_model(preferred):
+    """Best available model that can actually translate."""
+    for key in ("large-v3", "medium", "small", "base"):
+        if key in str(preferred) and "turbo" not in str(preferred):
+            return find_model(preferred)
+    for key in ("large-v3", "medium", "small", "base"):
+        m = find_model(key)
+        if m:
+            return m
+    return None
 
 
 def find_model(name):
@@ -144,6 +162,10 @@ def normalize(raw_json):
 
 
 def transcribe_one(src, studio, model, lang, translate, force):
+    # Keyed on the SOURCE language, including for translate passes. Assuming a
+    # translate pass emits Latin text and can therefore take -ml 1 is wrong in
+    # practice: it still returns fragmented, corrupted tokens of the source
+    # script. Verified, not assumed.
     word_level = lang.lower().split("-")[0] not in NON_LATIN
     studio = Path(studio)
     cache = studio / "transcripts"
@@ -163,14 +185,24 @@ def transcribe_one(src, studio, model, lang, translate, force):
     try:
         if not wav.is_file():
             extract_audio(src, wav)
-        raw = run_whisper(wav, model, lang, work / tag,
+        use = model
+        if translate and "turbo" in Path(model).name:
+            alt = translation_model(model)
+            if not alt:
+                die("translation needs a non-turbo model (large-v3, medium…);\n"
+                    "       turbo models cannot translate and silently return the\n"
+                    "       source language. None found in the model cache.")
+            print(f"  note     {Path(model).name} cannot translate — "
+                  f"using {Path(alt).name} for this pass")
+            use = alt
+        raw = run_whisper(wav, use, lang, work / tag,
                           translate=translate, word_level=word_level)
         words = normalize(raw)
         out.write_text(json.dumps({
             "source": str(Path(src).resolve()),
             "language": lang,
             "mode": tag,
-            "model": Path(model).name,
+            "model": Path(use).name,
             "granularity": "word" if word_level else "segment",
             "words": words,
         }, indent=2))

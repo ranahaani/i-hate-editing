@@ -41,6 +41,11 @@ downstream timestamp.
 producing corrupt UTF-8 and unusable subword fragments. Those languages use
 segment-level output plus silence detection.
 
+**9b. Never translate with a turbo model.** Turbo models are distilled for
+transcription and have no translation capability. Asked to translate they
+return the *source* language without error, which flows into captions as
+untranslated text. Use `large-v3` or `medium` for any translate pass.
+
 **10. Cache transcripts per source.** Re-transcribe only when the source file
 itself changes. Immutable output of immutable input.
 

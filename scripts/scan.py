@@ -97,10 +97,19 @@ def disk_free_gb(path="."):
         return 0.0
 
 
-def pick_model(lang, accel):
-    """Return (model_key, reason)."""
+def pick_model(lang, accel, translate=False):
+    """Return (model_key, reason).
+
+    Turbo models cannot translate — they return the source language instead —
+    so a project that needs English captions from non-English speech must not
+    be given one."""
     lang = (lang or "en").lower().split("-")[0]
     gpu = accel in ("metal", "cuda")
+
+    if translate:
+        if gpu:
+            return "large-v3", "translation needed — turbo models cannot translate"
+        return "medium", "translation needed on CPU — turbo cannot translate"
 
     if lang in LOW_RESOURCE:
         return "large-v3", (
@@ -255,7 +264,7 @@ def setup(report, footage_dir):
     gallery = (ask("Install the local review gallery? (y/n)", default="y") or "y").lower().startswith("y")
     growth = (ask("Install comment-to-DM automation? (y/n)", default="n") or "n").lower().startswith("y")
 
-    model, reason = pick_model(lang, report["accel"])
+    model, reason = pick_model(lang, report["accel"], translate=(lang != "en"))
     fname, size = MODELS[model]
 
     aspects = {"Short-form vertical (reels, shorts, TikTok)": ["9:16"],
