@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Capability scan + first-run setup for thumbstop.
+"""Capability scan + first-run setup for editkit.
 
 Detects what the machine already has, picks a Whisper model from language and
 hardware, and writes profile.yml. Standard library only — this runs before
@@ -69,7 +69,7 @@ def node_version():
 
 def ffmpeg_has_text_filters():
     """Many Homebrew ffmpeg builds ship without libass/libfreetype, so the
-    subtitles and drawtext filters are unavailable. Thumbstop renders text
+    subtitles and drawtext filters are unavailable. EditKit renders text
     through HyperFrames instead, so this is informational, not a blocker."""
     if not which("ffmpeg"):
         return None
@@ -195,7 +195,7 @@ def ask(prompt, options=None, default=None):
 
 def yaml_dump(profile):
     """Minimal YAML writer — avoids requiring PyYAML before install."""
-    lines = ["# thumbstop profile — the only configuration in this studio.",
+    lines = ["# editkit profile — the only configuration in this studio.",
              "# Everything else is a craft decision the studio makes for you.", ""]
 
     def emit(d, indent=0):

@@ -1,9 +1,9 @@
 ---
-name: thumbstop
+name: editkit
 description: Turn raw talking-head takes into a finished, publishable video package — cut, captioned, scored, graded, with platform variants, post caption and thumbnail. For short-form vertical and YouTube talking-head footage. Opinionated by design; the studio makes the craft decisions and takes plain-language direction. Use when someone drops recorded footage in a folder and wants it edited.
 ---
 
-# Thumbstop
+# EditKit
 
 A studio, not a tool. Someone hands you raw takes; you hand back something they
 can publish without touching an editor.
