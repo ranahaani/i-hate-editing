@@ -212,7 +212,31 @@ def build_proof(beats, width, height):
     return clips, anims
 
 
-def build_html(video_name, width, height, duration, chunks, profile, beats=None):
+def build_sfx(sounds):
+    """<audio> clips, peak-aligned by sfx.py.
+
+    Track indices stay low deliberately: HyperFrames drops or attenuates audio
+    on high tracks with no error at all, so a sting placed up with the visual
+    layers plays silently in the render."""
+    clips = []
+    for i, s in enumerate(sounds):
+        track = int(s.get("track", 20))
+        if track > AUDIO_TRACK_CEILING:
+            raise SystemExit(
+                f"error: audio track {track} exceeds the ceiling of "
+                f"{AUDIO_TRACK_CEILING}; it would render silently")
+        clips.append(
+            f'      <audio id="sfx{i}" class="clip" '
+            f'src="{html.escape(Path(s["file"]).name)}"\n'
+            f'             data-start="{float(s["start"]):.2f}" '
+            f'data-duration="{float(s["duration"]):.2f}"\n'
+            f'             data-track-index="{track}" '
+            f'data-volume="{float(s.get("volume", 0.6)):.2f}"></audio>')
+    return clips
+
+
+def build_html(video_name, width, height, duration, chunks, profile, beats=None,
+               sounds=None):
     esc = html.escape
     clips, anims = [], []
 
@@ -231,6 +255,7 @@ def build_html(video_name, width, height, duration, chunks, profile, beats=None)
     proof_clips, proof_anims = build_proof(beats or [], width, height)
     clips += proof_clips
     anims += proof_anims
+    clips += build_sfx(sounds or [])
 
     for i, c in enumerate(chunks):
         cid = f"cap{i}"
@@ -322,6 +347,11 @@ def main():
             b["meta"] = str((studio / "assets" / "proof" / f"{b['asset']}.json")
                             if "meta" not in b else b["meta"])
 
+    sounds = []
+    sfx_path = studio / "sfx.json"
+    if sfx_path.is_file():
+        sounds = json.loads(sfx_path.read_text()).get("sounds", [])
+
     profile = read_profile(studio)
     width, height, duration = probe(video)
 
@@ -334,6 +364,10 @@ def main():
         img = Path(json.loads(Path(b["meta"]).read_text())["image"])
         if img.is_file():
             shutil.copy2(img, comp / img.name)
+    for s_ in sounds:
+        f = Path(s_["file"])
+        if f.is_file():
+            shutil.copy2(f, comp / f.name)
 
     trailing = [c for c in chunks if c["end"] > duration + 0.05]
     if trailing:
@@ -343,10 +377,10 @@ def main():
             c["duration"] = max(0.1, c["end"] - c["start"])
 
     (comp / "index.html").write_text(
-        build_html(video.name, width, height, duration, chunks, profile, beats))
+        build_html(video.name, width, height, duration, chunks, profile, beats, sounds))
 
-    print(f"{len(chunks)} captions · {len(beats)} proof beat(s) "
-          f"over {duration:.1f}s · {width}x{height}")
+    print(f"{len(chunks)} captions · {len(beats)} proof beat(s) · "
+          f"{len(sounds)} sound(s) over {duration:.1f}s · {width}x{height}")
     print(f"-> {comp / 'index.html'}")
 
     if args.check:

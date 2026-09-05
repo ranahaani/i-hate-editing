@@ -117,12 +117,33 @@ anything.
 motion or sound on an unapproved cut — every downstream timestamp depends on
 it, and a base-cut change invalidates all of them.
 
-**9 — Enrich.** Grade, captions, sound design, motion, B-roll. Rules in
-`rules/`. This is where a trimmed recording becomes an edited video.
+**9 — Enrich.** In order:
+
+```bash
+python3 scripts/grade.py    cut.mp4 --strength normal   # look at the comparison
+python3 scripts/captions.py --studio <studio>
+python3 scripts/capture.py  <url> --studio <studio> --find "<the phrase>"
+python3 scripts/sfx.py plan --studio <studio> --library <sfx>
+python3 scripts/compose.py  --studio <studio> --render
+```
+
+Proof beats are authored by you in `proof.json`, the same way the EDL is —
+which page, which target, which move. `rules/proof.md` has the craft. This is
+where a trimmed recording becomes an edited video.
 
 **10 — Verify the render.** *Gate.* Frames and levels, again.
 
-**11 — Deliver the package.** See "Output".
+**11 — Deliver the package.**
+
+```bash
+python3 scripts/music.py   out/master.mp4 <bed>.mp3 -o out/final.mp4
+python3 scripts/deliver.py --studio <studio>
+```
+
+Then write `out/post.md` yourself from the spoken lines it surfaces, and look
+at the thumbnail candidates and pick one. Neither is generated: a generated
+title reads like a generated title, and "face clear, eyes open" is not a
+metric.
 
 **12 — Learn.** Record every correction the user made, phrased as an
 instruction for next time and filed under the area it affects:
@@ -182,9 +203,9 @@ the failure it prevents.
 | `rules/hooks.md` | Openings and retention |
 | `rules/captions.md` | Timing, chunking, style |
 | `rules/sound.md` | Sound effect placement, levels, music |
+| `rules/proof.md` | Screenshots, B-roll, zoom and highlight |
 | `rules/motion.md` | Zooms, transitions, cards, layout |
 | `rules/framing.md` | Crops, splits, composition |
-| `rules/proof.md` | Screenshots, B-roll, brand assets |
 
 ## Anti-patterns
 
