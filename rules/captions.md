@@ -94,6 +94,13 @@ For code-switched or non-English delivery aimed at an English-reading audience,
 caption the English translation of the actual spoken words — a real
 translation, not a paraphrase, and not sparse keywords.
 
-**Proofread machine translation before it ships.** Product and tool names are
-what ASR reliably destroys, and they are exactly the words the audience is
-watching for. Fix them by hand every time.
+**Machine translation is a draft, not caption copy.** Not a step to tidy up —
+raw output is routinely unusable. On a real edit it produced `ALL NIGHT." A
+JOKE,` (two sentences merged with stray punctuation), `THE WANT THIS LINK
+THEN` (garbled), and fragments cut mid-clause. Expect to rewrite most chunks
+against the timings, keeping what was actually said.
+
+**Fix product and tool names by hand, every time.** ASR reliably destroys
+exactly the words the audience is watching for — "Claude" comes back as
+"cloud" almost every run. Keep a per-project list of corrections and apply it
+before the captions are built.

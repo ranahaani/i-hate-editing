@@ -37,6 +37,14 @@ the desktop layout of most sites wastes two thirds of a 9:16 frame.
 break the moment a layout changes; mobile layouts hide half of them outright.
 Text is also how the beat is actually described: *zoom to the 100k stars*.
 
+**Found in the DOM is not the same as visible on screen.** A narrow viewport
+can truncate text with an ellipsis while the element's text content, and its
+reported coordinates, stay complete. A repo name matched and returned a box,
+but only its first letter actually drew — a highlight over it would have swept
+across nothing. Check the captured image at the target's coordinates before
+building a zoom or highlight on it, and if the text is not legible there, use
+a different target or a different move.
+
 **A missing target is a real answer.** If the text is not on the page at that
 viewport, the capture says so. Do not substitute a near-match — check whether
 the element is desktop-only, or point at something that is genuinely there.

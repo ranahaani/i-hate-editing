@@ -131,7 +131,16 @@ Proof beats are authored by you in `proof.json`, the same way the EDL is —
 which page, which target, which move. `rules/proof.md` has the craft. This is
 where a trimmed recording becomes an edited video.
 
-**10 — Verify the render.** *Gate.* Frames and levels, again.
+**10 — Verify the render.** *Gate.* Frames and levels, again, plus the beat
+map:
+
+```bash
+python3 scripts/beats.py --studio <studio>      # stretches with nothing new
+python3 scripts/sound.py check out/master.mp4   # stings audible, not just present
+```
+
+A shot that sits still is the most-reported defect in short-form and the
+easiest to miss, because nothing errors when a face holds for ten seconds.
 
 **11 — Deliver the package.**
 

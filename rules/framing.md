@@ -9,6 +9,11 @@ Where the speaker sits in the frame, and what shares it with them.
 Never compute a crop from arithmetic alone. Extract an actual frame from the
 actual footage, look at it, and decide from what you see.
 
+The method that works: render the same frame at three candidate positions —
+say 20%, 30% and 40% — put them side by side, and pick. It takes seconds and
+settles the question that arithmetic cannot, because where a person sits in
+frame differs with every recording setup.
+
 Crops derived from assumptions about where a person sits put the forehead at
 the top of frame or cut off the chin, and the error is invisible until someone
 watches it. One extracted frame costs seconds and settles it.
@@ -64,8 +69,18 @@ kisses the frame edge or wraps mid-phrase looks broken.
 Leave vertical breathing room between stacked elements — a divider, a big word
 and a sub-line need space between them, not just sequence.
 
-After rendering, look specifically for text touching an edge or overlapping a
-neighbour. This is a recurring defect and it is only visible in the output.
+**Never estimate text width — measure it where it renders.** This was got
+wrong three times in a row on one card: sizing from character count clipped
+the headline, accounting for the held zoom still clipped it, and measuring
+`clientWidth` *still* clipped it because that property includes the container's
+padding and permitted 1015px where only 918px existed. Glyph widths depend on
+the font that actually resolves, which is not knowable ahead of the render.
+Fit the text in the browser, against the true content box, and include any
+scale the element is animated to.
+
+After rendering, verify mechanically rather than by eye: sample the outermost
+dozen pixel columns of the frame for ink. Text touching an edge is a recurring
+defect and easy to miss in a thumbnail-sized check.
 
 ---
 

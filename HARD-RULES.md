@@ -46,6 +46,19 @@ transcription and have no translation capability. Asked to translate they
 return the *source* language without error, which flows into captions as
 untranslated text. Use `large-v3` or `medium` for any translate pass.
 
+**9c. Apply speed changes in the render, never afterwards.** Captions, sound
+and motion are all timed from the rendered timeline, so speeding up a finished
+cut drifts every one of them. Two traps come with it: `-ss` and `-t` must both
+precede `-i` (after `-i`, `-t` is an output-side limit measured on the sped
+timeline and cancels the speed change entirely), and any offset within a
+segment must be divided by the speed before being added to an output-timeline
+anchor.
+
+**9d. Probe display dimensions, not stream dimensions.** Phone footage carries
+a rotation matrix rather than rotated pixels: the stream reports 1920x1080
+while the decoder outputs 1080x1920. Reading width and height directly sizes a
+vertical video as landscape and letterboxes the entire edit, silently.
+
 **10. Cache transcripts per source.** Re-transcribe only when the source file
 itself changes. Immutable output of immutable input.
 

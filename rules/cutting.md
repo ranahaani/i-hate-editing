@@ -98,4 +98,10 @@ Hunt for two things specifically:
 Also check for **stale references**: dropping an item can leave the speaker
 saying "fourth" about what is now the third thing.
 
+**Not every repeat is a defect.** Reduplication is grammatical in many
+languages — Urdu's `کر کر کے` ("iteratively") is one word doubled on purpose.
+The detector flags adjacent repeats mechanically; deciding whether one is a
+seam artefact or real speech is yours. Never "fix" a repeat without checking
+it against the source.
+
 Content being present is not the same as content being clean.
