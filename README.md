@@ -62,7 +62,7 @@ script it drives:
 
 ```
 scan → transcribe → pack → cut → verify → grade → captions
-     → capture proof → sound → compose → music → deliver
+     → capture proof → sound → compose → music → deliver → review
 ```
 
 Two things are worth calling out, because no other tool does them.

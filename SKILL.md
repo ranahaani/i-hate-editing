@@ -113,7 +113,15 @@ Retakes cluster at file boundaries — expect one wherever a source ends.
 **7 — Verify the cut.** *Gate.* See below. Fix and re-verify before showing
 anything.
 
-**8 — Present the cut.** Show the user. **STOP.** Do not build captions,
+**8 — Present the cut.**
+
+```bash
+python3 scripts/review.py --studio <footage>/studio
+```
+
+Opens it in a browser with frame-stepping, and prints a LAN address for
+checking on a phone. Never hand over a remembered URL — a machine's IP changes
+with the network and a stale one wastes a round-trip. **STOP.** Do not build captions,
 motion or sound on an unapproved cut — every downstream timestamp depends on
 it, and a base-cut change invalidates all of them.
 
@@ -147,6 +155,7 @@ easiest to miss, because nothing errors when a face holds for ten seconds.
 ```bash
 python3 scripts/music.py   out/master.mp4 <bed>.mp3 -o out/final.mp4
 python3 scripts/deliver.py --studio <studio>
+python3 scripts/review.py  --studio <studio>
 ```
 
 Then write `out/post.md` yourself from the spoken lines it surfaces, and look

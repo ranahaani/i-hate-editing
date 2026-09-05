@@ -127,3 +127,14 @@ python3 scripts/sound.py inspect <any mp3>
 ```
 
 If all three work, the pipeline will run.
+
+## Reviewing
+
+```bash
+python3 scripts/review.py --studio <footage>/studio
+```
+
+Serves the finished video, opens it in your browser, and prints a LAN address
+for watching on a phone. `,` and `.` step a frame; space toggles play. The
+address is printed fresh each run rather than remembered, because it changes
+with the network.
