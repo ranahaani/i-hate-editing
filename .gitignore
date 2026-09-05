@@ -7,3 +7,4 @@ studio/
 *.wav
 *.mp3
 .env
+.venv/

@@ -1,0 +1,9 @@
+[project]
+name = "editkit"
+version = "0.1.0"
+description = "Turn raw talking-head takes into a publishable video package"
+requires-python = ">=3.10"
+dependencies = ["playwright>=1.40"]
+
+[tool.uv]
+package = false
