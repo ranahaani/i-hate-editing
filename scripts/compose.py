@@ -42,7 +42,7 @@ HYPERFRAMES_JSON = {
 }
 
 PACKAGE_JSON = {
-    "name": "editkit-composition", "private": True, "version": "1.0.0",
+    "name": "i-hate-editing-composition", "private": True, "version": "1.0.0",
     "scripts": {
         "dev": "npx --yes hyperframes preview",
         "check": "npx --yes hyperframes check",

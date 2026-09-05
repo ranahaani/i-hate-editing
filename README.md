@@ -1,8 +1,11 @@
-# editkit
+# I Hate Editing
 
 Drop in raw talking-head takes, get back a finished, publishable video.
 
-editkit is a skill for Claude Code and other shell-capable agents. It picks the
+The name is the origin story. This started as a note to myself: *never hand
+back work that still needs fixing by hand.*
+
+i-hate-editing is a skill for Claude Code and other shell-capable agents. It picks the
 best take across your retakes, cuts the filler, grades the footage, writes
 kinetic captions, captures real pages as B-roll and zooms into the thing you
 named, places sound so its peak lands on the beat, and hands you the platform
@@ -12,7 +15,7 @@ variants and thumbnail.
 
 That is the whole idea. Editing tools give a model ffmpeg and artistic freedom,
 and artistic freedom without taste produces the median boring cut every time.
-editkit ships roughly forty specific, numbered craft decisions — where captions
+i-hate-editing ships roughly forty specific, numbered craft decisions — where captions
 sit, how large a zoom has to be to read, why a sound effect that does not clip
 can still be inaudible — each one learned by a human rejecting real output.
 
@@ -32,9 +35,9 @@ Every run returns a package, because that is what an editor hands back:
 ## Install
 
 ```bash
-git clone https://github.com/ranahaani/editkit ~/Developer/editkit
-ln -sfn ~/Developer/editkit ~/.claude/skills/editkit     # Claude Code
-cd ~/Developer/editkit && uv venv .venv && uv pip install --python .venv playwright
+git clone https://github.com/ranahaani/i-hate-editing ~/Developer/i-hate-editing
+ln -sfn ~/Developer/i-hate-editing ~/.claude/skills/i-hate-editing     # Claude Code
+cd ~/Developer/i-hate-editing && uv venv .venv && uv pip install --python .venv playwright
 brew install ffmpeg whisper-cpp                          # macOS
 ```
 
@@ -78,7 +81,7 @@ anything.
 
 ## Proof B-roll
 
-When you name a repo, an article or a number, editkit captures the real page —
+When you name a repo, an article or a number, i-hate-editing captures the real page —
 in vertical, so it fills a 9:16 frame — then scrolls it, zooms onto the exact
 text you said, and sweeps a highlighter across the line.
 

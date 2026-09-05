@@ -17,22 +17,22 @@ On Linux, substitute your package manager. Nothing here is macOS-specific
 except the Homebrew commands.
 
 **Your ffmpeg does not need libass.** Many builds ship without it, so the
-`subtitles` and `drawtext` filters are unavailable. editkit renders all text
+`subtitles` and `drawtext` filters are unavailable. i-hate-editing renders all text
 through HyperFrames instead, which is both better looking and immune to this.
 The scan reports it as a note, not a problem.
 
 ## Install the skill
 
 ```bash
-git clone https://github.com/ranahaani/editkit ~/Developer/editkit
-cd ~/Developer/editkit
+git clone https://github.com/ranahaani/i-hate-editing ~/Developer/i-hate-editing
+cd ~/Developer/i-hate-editing
 ```
 
 Register it with your agent:
 
 ```bash
-ln -sfn ~/Developer/editkit ~/.claude/skills/editkit      # Claude Code
-# ln -sfn ~/Developer/editkit ~/.codex/skills/editkit     # Codex
+ln -sfn ~/Developer/i-hate-editing ~/.claude/skills/i-hate-editing      # Claude Code
+# ln -sfn ~/Developer/i-hate-editing ~/.codex/skills/i-hate-editing     # Codex
 ```
 
 ## Python environment
@@ -66,7 +66,7 @@ You do not normally choose one yourself.
 
 **Turbo models cannot translate.** Asked to, they return the source language
 without any error, which would flow into your captions as untranslated text.
-If your captions need translating, editkit substitutes a translation-capable
+If your captions need translating, i-hate-editing substitutes a translation-capable
 model automatically and says so.
 
 Models are looked for in `~/.cache/whisper`,
@@ -75,7 +75,7 @@ Models are looked for in `~/.cache/whisper`,
 
 ## Sound library
 
-editkit places sounds from a library you point it at, organised by category:
+i-hate-editing places sounds from a library you point it at, organised by category:
 
 ```
 sfx/
@@ -105,7 +105,7 @@ finds this and prints the fix.
 
 ```bash
 cd /path/to/your/footage
-python3 ~/.claude/skills/editkit/scripts/scan.py --footage .
+python3 ~/.claude/skills/i-hate-editing/scripts/scan.py --footage .
 ```
 
 It reports what it found, asks five questions, and writes `studio/profile.yml`
