@@ -20,12 +20,15 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from media import probe  # noqa: E402  (rotation-aware)
 from transcribe import read_profile  # noqa: E402
 
 # Visual clips can sit on any track. AUDIO must stay low — HyperFrames drops
 # or attenuates audio on high track indices without raising an error, so a
 # sting placed up here plays silently in the render.
 TRACK_VIDEO = 1
+BIG_ZOOM = 1.18          # held zoom on a card headline
+TRACK_CARD = 15
 TRACK_PROOF = 20
 TRACK_CAPTION = 60
 AUDIO_TRACK_CEILING = 40
@@ -46,18 +49,6 @@ PACKAGE_JSON = {
         "render": "npx --yes hyperframes render",
     },
 }
-
-
-def probe(path):
-    out = subprocess.run(
-        ["ffprobe", "-v", "error", "-select_streams", "v:0",
-         "-show_entries", "stream=width,height", "-show_entries", "format=duration",
-         "-of", "json", str(path)],
-        capture_output=True, text=True, errors="replace").stdout
-    d = json.loads(out or "{}")
-    st = (d.get("streams") or [{}])[0]
-    return (st.get("width") or 1080, st.get("height") or 1920,
-            float((d.get("format") or {}).get("duration") or 0))
 
 
 def caption_css(profile, width):
@@ -119,6 +110,141 @@ def proof_css(profile):
 """
 
 
+def card_css(profile, width):
+    accent = (profile.get("brand") or {}).get("accent", "#FFE300")
+    font = (profile.get("brand") or {}).get("font", "Archivo Black")
+    return f"""
+      .card {{
+        position: absolute; top: 0; left: 0;
+        width: 100%; height: 50%;
+        background: #0d0d10;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        padding: 0 {round(width * 0.075)}px;
+        font-family: "{font}", sans-serif;
+        text-align: center;
+      }}
+      .card .kicker {{
+        font-size: {round(width * 0.032)}px;
+        letter-spacing: 0.18em;
+        color: {accent};
+        text-transform: uppercase;
+        margin-bottom: {round(width * 0.028)}px;
+      }}
+      .card .big {{
+        line-height: 1.04;
+        color: #fff;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }}
+      .card .big em {{ color: {accent}; font-style: normal; }}
+      .band {{
+        position: absolute; top: 5.5%; left: 5%;
+        width: 90%;
+        background: {accent};
+        color: #0d0d10;
+        font-family: "{font}", sans-serif;
+        font-size: {round(width * 0.062)}px;
+        line-height: 1.06;
+        text-align: center;
+        text-transform: uppercase;
+        padding: {round(width * 0.022)}px {round(width * 0.02)}px;
+        box-shadow: 10px 10px 0 rgba(0,0,0,0.35);
+      }}
+      .card .sub {{
+        font-size: {round(width * 0.040)}px;
+        line-height: 1.35;
+        color: #b9c0cc;
+        margin-top: {round(width * 0.030)}px;
+        max-width: 86%;
+      }}
+"""
+
+
+def build_cards(cards, width, height, face_half_y):
+    """Half-screen split: designed card on top, face below.
+
+    The face is repositioned rather than scaled — scaling it while it is also
+    being moved into a half produces glitches that only show in motion
+    (rules/framing.md)."""
+    clips, anims = [], []
+    FULL = 'top: "0px", height: "100%", objectPosition: "50% 50%"'
+    HALF = (f'top: "50%", height: "50%", '
+            f'objectPosition: "50% {face_half_y:.0f}%"')
+
+    for i, c in enumerate(cards):
+        start, dur = float(c["start"]), float(c["duration"])
+        end = start + dur
+        cid = f"card{i}"
+
+        # A band sits over the top of a full frame and leaves the face alone —
+        # the hook headline lives in the empty space above the head, and the
+        # face must stay full-frame there (rules/hooks.md).
+        if c.get("style") == "band":
+            txt = html.escape(c["big"]).replace("*", "")
+            clips.append(
+                f'      <div id="{cid}" class="clip" data-start="{start:.2f}" '
+                f'data-duration="{dur:.2f}" data-track-index="{TRACK_CARD + i}">\n'
+                f'        <div class="inner band">{txt}</div>\n'
+                f'      </div>')
+            anims.append(
+                f'      tl.from("#{cid} .inner", {{ yPercent: -160, opacity: 0, '
+                f'duration: 0.32, ease: "back.out(1.7)" }}, {start:.2f});')
+            anims.append(
+                f'      tl.to("#{cid} .inner", {{ yPercent: -160, opacity: 0, '
+                f'duration: 0.22, ease: "power3.in" }}, {end - 0.22:.2f});')
+            anims.append(
+                f'      tl.set("#{cid} .inner", {{ opacity: 0 }}, {end:.2f});')
+            continue
+        big = c["big"]
+        if "*" in big:                      # *word* marks the accent word
+            parts = big.split("*")
+            big = "".join(f"<em>{p}</em>" if n % 2 else p for n, p in enumerate(parts))
+        # Size the headline so the whole line fits inside the padding. A fixed
+        # size clips long phrases at both edges, which rules/framing.md forbids
+        # and which is only visible after rendering.
+        plain = big.replace("<em>", "").replace("</em>", "")
+        avail = width * (1 - 2 * 0.075) * 0.97
+        # Heavy uppercase sans averages ~0.62 em per glyph, and the headline is
+        # zoomed to BIG_ZOOM during its hold — sizing to fit at rest still
+        # clips once the zoom lands.
+        fitted = avail / max(1, len(plain) * 0.62 * BIG_ZOOM)
+        size = int(min(width * 0.105, fitted))
+
+        inner = ""
+        if c.get("kicker"):
+            inner += f'<div class="kicker">{html.escape(c["kicker"])}</div>'
+        inner += (f'<div class="big" id="{cid}big" '
+                  f'style="font-size:{size}px">{big}</div>')
+        if c.get("sub"):
+            inner += f'<div class="sub">{html.escape(c["sub"])}</div>'
+
+        clips.append(
+            f'      <div id="{cid}" class="clip" data-start="{start:.2f}" '
+            f'data-duration="{dur:.2f}" data-track-index="{TRACK_CARD + i}">\n'
+            f'        <div class="inner card">{inner}</div>\n'
+            f'      </div>')
+
+        anims.append(f'      tl.set("#face", {{ {HALF} }}, {start:.2f});')
+        anims.append(f'      tl.set("#face", {{ {FULL} }}, {end:.2f});')
+        anims.append(
+            f'      tl.from("#{cid} .inner", {{ xPercent: 110, duration: 0.26, '
+            f'ease: "power3.out" }}, {start:.2f});')
+        anims.append(
+            f'      tl.to("#{cid} .inner", {{ xPercent: -110, duration: 0.22, '
+            f'ease: "power3.in" }}, {end - 0.22:.2f});')
+        anims.append(f'      tl.set("#{cid} .inner", {{ xPercent: -110 }}, {end:.2f});')
+        # A held zoom on the key word, err large (rules/motion.md).
+        hold_at = start + 0.45
+        anims.append(
+            f'      tl.to("#{cid}big", {{ scale: 1.18, duration: 0.28, '
+            f'ease: "power2.out" }}, {hold_at:.2f});')
+        anims.append(
+            f'      tl.to("#{cid}big", {{ scale: 1.0, duration: 0.30, '
+            f'ease: "power2.inOut" }}, {min(hold_at + 1.5, end - 0.3):.2f});')
+    return clips, anims
+
+
 def build_proof(beats, width, height):
     """Scroll / zoom / highlight over a captured page image.
 
@@ -136,6 +262,10 @@ def build_proof(beats, width, height):
 
         def px(css_v):
             return css_v * dpr * fit
+
+        def clamp_x(x):
+            """Keep the image covering the frame horizontally."""
+            return max(min(x, 0.0), min(0.0, width - width))  # image is frame-wide
 
         def clamp_pan(y):
             """Keep the image covering the frame.
@@ -190,18 +320,43 @@ def build_proof(beats, width, height):
                 f'      tl.fromTo("#{bid}pan", {{ y: {y0:.0f} }}, '
                 f'{{ y: {y1:.0f}, duration: {dur:.2f}, ease: "none" }}, {start:.2f});')
         else:
-            scale = float(b.get("scale", 2.0))
+            # Translate is computed directly from the scale with the origin
+            # at 0,0 rather than scaling about the target and translating
+            # separately — the two-step version leaves the target off-frame
+            # because the origin and the translate compose in a way that is
+            # easy to get subtly wrong. This form is exact:
+            #   x = frame_centre - target_centre * scale
+            requested = float(b.get("scale", 2.0))
+            scale = requested
+            if tgt:
+                tw = max(1.0, px(tgt["w"]))
+                fit_scale = (width * 0.86) / tw
+                scale = max(1.05, min(requested, fit_scale))
+                if scale < requested - 0.01:
+                    print(f"  beat {i}: scale {requested:.2f} -> {scale:.2f} so "
+                          f"{b.get('target')!r} stays inside the frame")
             hold = max(0.3, dur - 0.9)
-            pan_y = clamp_pan(height / 2 - cy)
+
+            def place(sc):
+                x = width / 2 - cx * sc
+                y = height / 2 - cy * sc
+                # Keep the image covering the frame at this scale.
+                x = max(min(x, 0.0), min(0.0, width - width * sc))
+                y = max(min(y, 0.0), min(0.0, height - shown_h * sc))
+                return x, y
+
+            x0, y0 = place(1.0)
+            x1, y1 = place(scale)
             anims.append(
-                f'      tl.set("#{bid}pan", {{ y: {pan_y:.0f}, '
-                f'transformOrigin: "{cx:.0f}px {cy:.0f}px" }}, {start:.2f});')
+                f'      tl.set("#{bid}pan", {{ transformOrigin: "0px 0px" }}, {start:.2f});')
             anims.append(
-                f'      tl.fromTo("#{bid}pan", {{ scale: 1 }}, {{ scale: {scale:.2f}, '
+                f'      tl.fromTo("#{bid}pan", '
+                f'{{ scale: 1, x: {x0:.0f}, y: {y0:.0f} }}, '
+                f'{{ scale: {scale:.3f}, x: {x1:.0f}, y: {y1:.0f}, '
                 f'duration: 0.55, ease: "power2.inOut" }}, {start:.2f});')
             anims.append(
-                f'      tl.to("#{bid}pan", {{ scale: 1, duration: 0.35, '
-                f'ease: "power2.in" }}, {start + 0.55 + hold:.2f});')
+                f'      tl.to("#{bid}pan", {{ scale: 1, x: {x0:.0f}, y: {y0:.0f}, '
+                f'duration: 0.35, ease: "power2.in" }}, {start + 0.55 + hold:.2f});')
 
         if hl:
             # Sweep left to right, like a marker drawn across the line.
@@ -236,7 +391,7 @@ def build_sfx(sounds):
 
 
 def build_html(video_name, width, height, duration, chunks, profile, beats=None,
-               sounds=None):
+               sounds=None, cards=None, face_half_y=30.0):
     esc = html.escape
     clips, anims = [], []
 
@@ -251,6 +406,10 @@ def build_html(video_name, width, height, duration, chunks, profile, beats=None,
         f'data-track-index="{TRACK_VIDEO}"\n'
         f'             style="position:absolute;top:0;left:0;width:100%;height:100%;'
         f'object-fit:cover;"></video>')
+
+    card_clips, card_anims = build_cards(cards or [], width, height, face_half_y)
+    clips += card_clips
+    anims += card_anims
 
     proof_clips, proof_anims = build_proof(beats or [], width, height)
     clips += proof_clips
@@ -292,7 +451,7 @@ def build_html(video_name, width, height, duration, chunks, profile, beats=None,
         margin: 0; width: {width}px; height: {height}px;
         overflow: hidden; background: #000;
       }}
-{caption_css(profile, width)}{proof_css(profile)}
+{caption_css(profile, width)}{proof_css(profile)}{card_css(profile, width)}
     </style>
   </head>
   <body>
@@ -303,6 +462,31 @@ def build_html(video_name, width, height, duration, chunks, profile, beats=None,
     </div>
 
     <script>
+      // Fit every card headline to its box, measured in the browser rather
+      // than estimated from character counts — glyph widths depend on the font
+      // that actually resolves, and an estimate clips the text at both edges.
+      // The zoom factor is included, since the headline is scaled during hold.
+      (function fitHeadlines() {{
+        const ZOOM = {BIG_ZOOM};
+        document.querySelectorAll(".card .big").forEach((el) => {{
+          // clientWidth includes the card's horizontal padding, so measuring
+          // it directly allows more width than actually exists and the
+          // headline still clips.
+          const par = el.parentElement;
+          const cs = getComputedStyle(par);
+          const box = (par.clientWidth
+                       - parseFloat(cs.paddingLeft)
+                       - parseFloat(cs.paddingRight)) * 0.98;
+          let size = parseFloat(getComputedStyle(el).fontSize);
+          let guard = 0;
+          while (el.scrollWidth * ZOOM > box && size > 24 && guard < 80) {{
+            size -= 2;
+            el.style.fontSize = size + "px";
+            guard++;
+          }}
+        }});
+      }})();
+
       window.__timelines = window.__timelines || {{}};
       const tl = gsap.timeline({{ paused: true }});
 {chr(10).join(anims)}
@@ -347,6 +531,11 @@ def main():
             b["meta"] = str((studio / "assets" / "proof" / f"{b['asset']}.json")
                             if "meta" not in b else b["meta"])
 
+    cards = []
+    cards_path = studio / "cards.json"
+    if cards_path.is_file():
+        cards = json.loads(cards_path.read_text()).get("cards", [])
+
     sounds = []
     sfx_path = studio / "sfx.json"
     if sfx_path.is_file():
@@ -377,9 +566,10 @@ def main():
             c["duration"] = max(0.1, c["end"] - c["start"])
 
     (comp / "index.html").write_text(
-        build_html(video.name, width, height, duration, chunks, profile, beats, sounds))
+        build_html(video.name, width, height, duration, chunks, profile, beats,
+                   sounds, cards, float(profile.get("face_half_y", 30))))
 
-    print(f"{len(chunks)} captions · {len(beats)} proof beat(s) · "
+    print(f"{len(chunks)} captions · {len(cards)} card(s) · {len(beats)} proof · "
           f"{len(sounds)} sound(s) over {duration:.1f}s · {width}x{height}")
     print(f"-> {comp / 'index.html'}")
 

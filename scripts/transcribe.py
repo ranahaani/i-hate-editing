@@ -117,11 +117,17 @@ def extract_audio(src, wav):
         check=True)
 
 
-def run_whisper(wav, model, lang, out_stem, translate=False, word_level=True):
+def run_whisper(wav, model, lang, out_stem, translate=False, word_level=True,
+                max_len=None):
     cmd = ["whisper-cli", "-m", str(model), "-f", str(wav),
            "-l", lang, "-oj", "-of", str(out_stem)]
     if word_level:
         cmd += ["-ml", "1"]          # one token per segment => word-level timing
+    elif max_len:
+        # Phrase-level. Safe on Latin output: the -ml corruption is a
+        # multi-byte splitting problem, and a translate pass from a
+        # translation-capable model emits English.
+        cmd += ["-ml", str(int(max_len))]
     if translate:
         cmd += ["-tr"]
     proc = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
@@ -161,6 +167,56 @@ def normalize(raw_json):
     return items
 
 
+# Whisper falls into repetition loops on long audio — it will emit the same
+# phrase every two seconds to the end of the file. Translate passes are the
+# most susceptible. Windowing avoids it because each pass is short enough to
+# stay inside the model's context.
+WINDOW = 25.0
+OVERLAP = 1.0
+
+
+def windowed(wav, model, lang, workdir, translate, total):
+    """Run whisper in windows and stitch, offsetting each window's times."""
+    items, cursor, idx = [], 0.0, 0
+    while cursor < total:
+        span = min(WINDOW, total - cursor)
+        if span < 0.4:
+            break
+        piece = workdir / f"w{idx:03d}.wav"
+        subprocess.run(
+            ["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{cursor:.3f}",
+             "-t", f"{span:.3f}", "-i", str(wav), str(piece)], check=True)
+        raw = run_whisper(piece, model, lang, workdir / f"w{idx:03d}",
+                          translate=translate, word_level=False,
+                          max_len=48 if translate else None)
+        for it in normalize(raw):
+            # Whisper can report times past the clip it was given; clamp them
+            # or one bad segment swallows the next window through the dedup.
+            it["start"] = min(it["start"], span) + cursor
+            it["end"] = min(it["end"], span) + cursor
+            if it["end"] <= it["start"]:
+                continue
+            if items and it["start"] < items[-1]["end"] - 0.05:
+                continue
+            items.append(it)
+        piece.unlink(missing_ok=True)
+        cursor += WINDOW - OVERLAP
+        idx += 1
+    return items
+
+
+def looped(items, threshold=4):
+    """True when one phrase repeats far more than speech plausibly would."""
+    from collections import Counter
+    if len(items) < 8:
+        return False
+    counts = Counter(i["text"].strip() for i in items if len(i["text"].strip()) > 12)
+    if not counts:
+        return False
+    top, n = counts.most_common(1)[0]
+    return n >= threshold and n / len(items) > 0.15
+
+
 def transcribe_one(src, studio, model, lang, translate, force):
     # Keyed on the SOURCE language, including for translate passes. Assuming a
     # translate pass emits Latin text and can therefore take -ml 1 is wrong in
@@ -198,6 +254,19 @@ def transcribe_one(src, studio, model, lang, translate, force):
         raw = run_whisper(wav, use, lang, work / tag,
                           translate=translate, word_level=word_level)
         words = normalize(raw)
+
+        # A whole-file pass can loop; if it did, redo it in windows. Checked
+        # rather than assumed, because windowing costs time and most passes
+        # are fine.
+        if looped(words):
+            total = float(subprocess.run(
+                ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                 "-of", "default=nw=1:nk=1", str(wav)],
+                capture_output=True, text=True, errors="replace").stdout.strip() or 0)
+            print(f"  note     whole-file pass looped — re-running in "
+                  f"{WINDOW:.0f}s windows")
+            words = windowed(wav, use, lang, work, translate, total)
+            word_level = False
         out.write_text(json.dumps({
             "source": str(Path(src).resolve()),
             "language": lang,

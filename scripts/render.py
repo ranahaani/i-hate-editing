@@ -27,6 +27,9 @@ import sys
 import tempfile
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from media import probe  # noqa: E402  (rotation-aware)
+
 FADE = 0.030          # hard rule 3 — 30ms audio fade at every boundary
 PAD_MIN, PAD_MAX = 0.030, 0.200   # hard rule 7 working window
 
@@ -44,29 +47,16 @@ def die(msg):
     sys.exit(1)
 
 
-def probe(path):
-    out = subprocess.run(
-        ["ffprobe", "-v", "error", "-select_streams", "v:0",
-         "-show_entries", "stream=width,height,r_frame_rate",
-         "-show_entries", "format=duration",
-         "-of", "json", str(path)],
-        capture_output=True, text=True, errors="replace").stdout
-    d = json.loads(out or "{}")
-    st = (d.get("streams") or [{}])[0]
-    num, _, den = (st.get("r_frame_rate") or "30/1").partition("/")
-    fps = float(num) / float(den or 1)
-    return {
-        "w": st.get("width"), "h": st.get("height"), "fps": fps,
-        "duration": float((d.get("format") or {}).get("duration") or 0),
-    }
-
-
 def clamp_pad(v):
     return max(PAD_MIN, min(PAD_MAX, float(v)))
 
 
-def extract(src, start, end, dst, target, grade, preview):
-    """Encode one segment: normalised geometry, graded, with edge fades."""
+def extract(src, start, end, dst, target, grade, preview, speed=1.0):
+    """Encode one segment: normalised geometry, graded, with edge fades.
+
+    Speed is applied here rather than to the finished cut so that the timeline
+    records sped durations. Captions and sound are timed from that timeline, so
+    speeding up afterwards would drift every one of them."""
     dur = end - start
     if dur <= 0:
         die(f"non-positive range on {Path(src).name}: {start}->{end}")
@@ -81,11 +71,32 @@ def extract(src, start, end, dst, target, grade, preview):
     if grade:
         vf.insert(0, grade)
 
-    out_fade = max(0.0, dur - FADE)
-    af = f"afade=t=in:st=0:d={FADE},afade=t=out:st={out_fade:.3f}:d={FADE}"
+    af_parts = []
+    if abs(speed - 1.0) > 0.001:
+        vf.append(f"setpts=PTS/{speed:.4f}")
+        # atempo is only valid 0.5-2.0; chain it for anything outside that.
+        remaining, tempo = speed, []
+        while remaining > 2.0:
+            tempo.append(2.0)
+            remaining /= 2.0
+        while remaining < 0.5:
+            tempo.append(0.5)
+            remaining /= 0.5
+        tempo.append(remaining)
+        af_parts += [f"atempo={t:.4f}" for t in tempo]
+        dur = dur / speed
 
+    out_fade = max(0.0, dur - FADE)
+    af_parts += [f"afade=t=in:st=0:d={FADE}",
+                 f"afade=t=out:st={out_fade:.3f}:d={FADE}"]
+    af = ",".join(af_parts)
+
+    # -ss and -t must BOTH precede -i. After -i, -t is an output-side limit
+    # measured on the sped timeline, which pulls extra source and cancels the
+    # speed change entirely. Only visible when speed != 1.
+    src_dur = (end - start)
     cmd = ["ffmpeg", "-y", "-loglevel", "error",
-           "-ss", f"{start:.3f}", "-i", str(src), "-t", f"{dur:.3f}",
+           "-ss", f"{start:.3f}", "-t", f"{src_dur:.3f}", "-i", str(src),
            "-vf", ",".join(vf), "-af", af,
            "-c:v", "libx264", "-preset", "veryfast" if preview else "medium",
            "-crf", "26" if preview else "18", "-pix_fmt", "yuv420p",
@@ -118,6 +129,8 @@ def main():
     ap.add_argument("--studio", default="studio")
     ap.add_argument("--edl", default=None)
     ap.add_argument("-o", "--out", default=None)
+    ap.add_argument("--speed", type=float, default=None,
+                    help="playback speed; 1.2 is the short-form default")
     ap.add_argument("--preview", action="store_true", help="fast half-size draft")
     ap.add_argument("--keep-segments", action="store_true")
     args = ap.parse_args()
@@ -136,6 +149,7 @@ def main():
     pad = edl.get("pad") or {}
     pad_in, pad_out = clamp_pad(pad.get("in", 0.05)), clamp_pad(pad.get("out", 0.08))
 
+    speed = args.speed if args.speed else float(edl.get("speed", 1.0))
     grade_key = edl.get("grade") or "none"
     grade = GRADES.get(grade_key, grade_key if grade_key not in GRADES else None)
     if grade_key not in GRADES and grade_key != "none":
@@ -143,10 +157,11 @@ def main():
 
     # Normalise every segment to the first source's geometry.
     first = sources.get(ranges[0]["source"]) or ranges[0]["source"]
-    info = probe(first)
+    iw, ih, _ = probe(first)
+    info = {"w": iw, "h": ih}
     if not info["w"]:
         die(f"could not probe {first}")
-    target = (info["w"], info["h"], round(info["fps"]))
+    target = (info["w"], info["h"], 30)
 
     work = studio / "segments"
     if work.exists():
@@ -155,18 +170,20 @@ def main():
 
     parts, timeline, cursor = [], [], 0.0
     print(f"{len(ranges)} ranges · {target[0]}x{target[1]}@{target[2]}"
+          f"{f' · {speed:g}x' if abs(speed - 1.0) > 0.001 else ''}"
           f"{' · preview' if args.preview else ''}")
 
     for i, r in enumerate(ranges):
         src = sources.get(r["source"], r["source"])
         if not Path(src).is_file():
             die(f"source not found: {src}")
-        sinfo = probe(src)
+        _, _, src_dur = probe(src)
+        sinfo = {"duration": src_dur}
         start = max(0.0, float(r["start"]) - pad_in)
         end = min(sinfo["duration"], float(r["end"]) + pad_out)
         dst = work / f"seg_{i:03d}.mp4"
-        extract(src, start, end, dst, target, grade, args.preview)
-        d = probe(dst)["duration"]
+        extract(src, start, end, dst, target, grade, args.preview, speed)
+        d = probe(dst)[2]
         timeline.append({
             "index": i,
             "beat": r.get("beat"),
@@ -189,6 +206,7 @@ def main():
     seams = [t["out_start"] for t in timeline[1:]]
     (studio / "timeline.json").write_text(json.dumps({
         "output": str(out.resolve()),
+        "speed": speed,
         "predicted_duration": round(cursor, 3),
         "segments": timeline,
         "seams": seams,
@@ -197,7 +215,7 @@ def main():
     if not args.keep_segments:
         shutil.rmtree(work, ignore_errors=True)
 
-    actual = probe(out)["duration"]
+    actual = probe(out)[2]
     drift = abs(actual - cursor)
     print(f"\n{out}  {actual:.2f}s (predicted {cursor:.2f}s, drift {drift:.3f}s)")
     if drift > 0.15:

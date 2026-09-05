@@ -22,6 +22,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from media import probe  # noqa: E402  (rotation-aware)
 from transcribe import read_profile  # noqa: E402
 
 ASPECTS = {
@@ -35,46 +36,6 @@ THUMB_CANDIDATES = 6
 
 def sh(cmd):
     return subprocess.run(cmd, capture_output=True, text=True, errors="replace")
-
-
-def probe(path):
-    out = sh(["ffprobe", "-v", "error", "-select_streams", "v:0",
-              "-show_entries", "stream=width,height", "-show_entries", "format=duration",
-              "-of", "json", str(path)]).stdout
-    d = json.loads(out or "{}")
-    st = (d.get("streams") or [{}])[0]
-    return (st.get("width") or 0, st.get("height") or 0,
-            float((d.get("format") or {}).get("duration") or 0))
-
-
-def variant_filter(src_w, src_h, tw, th, focus):
-    """Fit the master into a different aspect.
-
-    Cropping is always preferable when enough of the frame survives — blurred
-    bars are a fallback, not a default. The threshold is how much of the
-    source height a crop would keep: a vertical master crops cleanly to square
-    (about 56% kept) but not to landscape (about 32%), where the subject would
-    no longer fit and a contained copy over a blurred fill is the honest
-    option."""
-    src_ar, dst_ar = src_w / src_h, tw / th
-    if abs(src_ar - dst_ar) < 0.01:
-        return f"scale={tw}:{th}", "scaled"
-
-    if dst_ar < src_ar:
-        # Target is taller than the source: crop the sides.
-        return (f"scale=-2:{th},crop={tw}:{th}:(iw-{tw})*0.5:0", "cropped")
-
-    # Target is wider. Scaling to the target width, how much height survives?
-    scaled_h = src_h * (tw / src_w)
-    kept = th / scaled_h
-    if kept >= 0.50:
-        return (f"scale={tw}:-2,crop={tw}:{th}:0:(ih-{th})*{focus:.2f}", "cropped")
-
-    return (f"split=2[bg][fg];"
-            f"[bg]scale={tw}:{th}:force_original_aspect_ratio=increase,"
-            f"crop={tw}:{th},boxblur=28:2,eq=brightness=-0.08[bgb];"
-            f"[fg]scale={tw}:{th}:force_original_aspect_ratio=decrease[fgs];"
-            f"[bgb][fgs]overlay=(W-w)/2:(H-h)/2", "blurred fill")
 
 
 def dst_ar_wider(src_w, src_h, tw, th):

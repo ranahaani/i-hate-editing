@@ -85,8 +85,13 @@ def to_words(doc):
     return out
 
 
-def remap(words, segments, source_key):
-    """Source time -> output time, dropping anything not kept in the cut."""
+def remap(words, segments, source_key, speed=1.0):
+    """Source time -> output time, dropping anything not kept in the cut.
+
+    The offset within a segment is divided by the playback speed. Adding a
+    source-seconds offset to an output-timeline anchor drifts progressively
+    through every segment, and a word near the end lands past the segment
+    entirely."""
     kept = []
     for seg in segments:
         if seg["source"] != source_key:
@@ -95,8 +100,8 @@ def remap(words, segments, source_key):
         for w in words:
             if w["start"] >= s0 and w["start"] < s1:
                 kept.append({
-                    "start": w["start"] - s0 + o0,
-                    "end": min(w["end"], s1) - s0 + o0,
+                    "start": (w["start"] - s0) / speed + o0,
+                    "end": (min(w["end"], s1) - s0) / speed + o0,
                     "text": w["text"], "approx": w["approx"],
                 })
     return sorted(kept, key=lambda w: w["start"])
@@ -156,6 +161,8 @@ def main():
     ap.add_argument("--studio", default="studio")
     ap.add_argument("--max-words", type=int, default=MAX_WORDS)
     ap.add_argument("--keywords", default="", help="comma-separated words to always emphasise")
+    ap.add_argument("--fix", action="append", default=[],
+                    help="wrong=right, repeatable; ASR reliably mangles product names")
     ap.add_argument("-o", "--out", default=None)
     args = ap.parse_args()
 
@@ -171,8 +178,14 @@ def main():
     prof = read_profile(studio)
     prefer_translate = prof.get("translate_captions") is True
     keywords = {k.strip().lower() for k in args.keywords.split(",") if k.strip()}
+    fixes = {}
+    for f in args.fix:
+        if "=" in f:
+            a, b = f.split("=", 1)
+            fixes[a.strip().lower()] = b.strip()
 
     segments = tl["segments"]
+    speed = float(tl.get("speed", 1.0))
     all_words, approx_any, missing = [], False, []
     for key in sorted({s["source"] for s in segments}):
         path = sources.get(key, key)
@@ -182,7 +195,7 @@ def main():
             continue
         words = to_words(doc)
         approx_any = approx_any or any(w["approx"] for w in words)
-        all_words += remap(words, segments, key)
+        all_words += remap(words, segments, key, speed)
 
     if missing:
         print(f"error: no transcript for {', '.join(missing)} — run transcribe.py",
@@ -201,6 +214,11 @@ def main():
         end = max(g[-1]["end"], start + MIN_ON_SCREEN)
         if start >= end:
             continue
+        for w in g:
+            bare = re.sub(r"[^\w']", "", w["text"]).lower()
+            if bare in fixes:
+                w["text"] = w["text"].replace(
+                    re.sub(r"[^\w']", "", w["text"]), fixes[bare])
         em = emphasis(g, keywords)
         out_chunks.append({
             "start": round(start, 3),
