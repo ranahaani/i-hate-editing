@@ -200,7 +200,7 @@ the failure it prevents.
 |---|---|
 | `HARD-RULES.md` | Correctness. Silent failures. Non-negotiable. |
 | `rules/cutting.md` | Take selection, boundaries, silence, pacing |
-| `rules/hooks.md` | Openings and retention |
+| `rules/hooks.md` | Openings, headline, retention |
 | `rules/captions.md` | Timing, chunking, style |
 | `rules/sound.md` | Sound effect placement, levels, music |
 | `rules/proof.md` | Screenshots, B-roll, zoom and highlight |
