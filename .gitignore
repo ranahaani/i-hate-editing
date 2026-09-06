@@ -3,6 +3,8 @@ __pycache__/
 .DS_Store
 studio/
 *.mp4
+# ...but the demo is a docs asset, not footage
+!docs/*.mp4
 *.mov
 *.wav
 *.mp3
