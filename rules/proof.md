@@ -104,6 +104,13 @@ page in, hold, slide it out, and the speaker is back.
 
 ---
 
+## A screenshot is not a thumbnail
+
+Ranking frames by sharpness puts a page of text first every time — text has far
+more edge contrast than a face. Sample thumbnail candidates only from moments
+the speaker is actually on screen, skipping proof shots and full-frame cards,
+or the best-scoring frame will be a screenshot nobody would click.
+
 ## Verify
 
 Every proof beat, before shipping:

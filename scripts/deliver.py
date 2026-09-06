@@ -142,11 +142,37 @@ def main():
         old.unlink()
     tl_path = studio / "timeline.json"
     seams = json.loads(tl_path.read_text()).get("seams", []) if tl_path.is_file() else []
+
+    # Sample away from moments the face is not on screen. Ranking on sharpness
+    # alone puts a screenshot first every time — a page of text has far more
+    # edge contrast than a face — and a screenshot is a poor thumbnail.
+    blocked = []
+    for f, key in ((studio / "proof.json", "beats"), (studio / "cards.json", "cards")):
+        if not f.is_file():
+            continue
+        for it in json.loads(f.read_text()).get(key, []):
+            if key == "beats" or it.get("full"):
+                a = float(it["start"])
+                blocked.append((a, a + float(it["duration"])))
+
+    def usable(t):
+        return not any(a - 0.2 <= t <= b + 0.2 for a, b in blocked)
+
     scored = []
     for i in range(THUMB_CANDIDATES):
         t = dur * (i + 0.5) / THUMB_CANDIDATES
         if any(abs(t - s) < 0.4 for s in seams):
             t += 0.5
+        if not usable(t):
+            # Scan outward for the nearest moment the face is actually on
+            # screen, rather than giving up after a couple of small nudges.
+            for step in [x * 0.2 for x in range(1, 61)]:
+                if usable(t + step) and t + step < dur - 0.1:
+                    t += step
+                    break
+                if usable(t - step) and t - step > 0.2:
+                    t -= step
+                    break
         t = min(t, max(0.0, dur - 0.1))
         p = thumbs / f"t{i}_{t:.1f}s.png"
         sh(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{t:.2f}",

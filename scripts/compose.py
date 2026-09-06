@@ -196,6 +196,7 @@ def build_cards(cards, width, height, face_half_y):
     (rules/framing.md)."""
     clips, anims = [], []
     card_index = 0
+    prev_card_end = None
     FULL = 'top: "0px", height: "100%", objectPosition: "50% 50%"'
     HALF = (f'top: "50%", height: "50%", '
             f'objectPosition: "50% {face_half_y:.0f}%"')
@@ -268,19 +269,28 @@ def build_cards(cards, width, height, face_half_y):
             anims.append(f'      tl.set("#face", {{ {HALF} }}, {start:.2f});')
             anims.append(f'      tl.set("#face", {{ {FULL} }}, {end:.2f});')
 
-        # Rotate the entrance. Repeating one arrival makes an edit feel
-        # automated, which it is, and the point is that it should not look it
-        # (rules/motion.md).
-        ENTRANCES = [
-            ("{ xPercent: 110 }", "{ xPercent: -110 }"),
-            ("{ yPercent: -110 }", "{ yPercent: -110 }"),
-            ("{ scale: 0.82, opacity: 0 }", "{ scale: 1.06, opacity: 0 }"),
-            ("{ xPercent: -110 }", "{ xPercent: 110 }"),
-        ]
-        enter, leave = ENTRANCES[card_index % len(ENTRANCES)]
+        # Choose the arrival from what the element is, not from variety alone
+        # (rules/motion.md). Variety only breaks ties between equals.
+        prev_end = prev_card_end
+        follows_card = prev_end is not None and (start - prev_end) < 1.0
+
+        if c.get("full"):
+            # A payoff owns the frame. No animation is the strongest arrival
+            # when the moment earns it; the impact carries the transition.
+            enter, leave, dur_in = "{ opacity: 0 }", "{ opacity: 0 }", 0.04
+        elif follows_card:
+            # One card pushing the last out reads as a sequence.
+            side = 110 if (card_index % 2 == 0) else -110
+            enter, leave, dur_in = (f"{{ xPercent: {side} }}",
+                                    f"{{ xPercent: {-side} }}", 0.28)
+        else:
+            # Coming in over the speaker: from outside the frame, so the face
+            # is handed off rather than replaced.
+            enter, leave, dur_in = ("{ yPercent: -110 }", "{ yPercent: -110 }", 0.30)
         card_index += 1
+        prev_card_end = end
         anims.append(
-            f'      tl.from("#{cid} .inner", {{ ...{enter}, duration: 0.28, '
+            f'      tl.from("#{cid} .inner", {{ ...{enter}, duration: {dur_in}, '
             f'ease: "power3.out" }}, {start:.2f});')
         anims.append(
             f'      tl.to("#{cid} .inner", {{ ...{leave}, duration: 0.22, '
