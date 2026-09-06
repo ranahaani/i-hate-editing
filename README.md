@@ -104,71 +104,68 @@ mechanical work; the agent only makes taste calls.
   "theme": "base",
   "themeVariables": {
     "fontFamily": "ui-sans-serif, system-ui, sans-serif",
-    "fontSize": "13px",
-    "primaryColor": "#fafaf9",
-    "primaryTextColor": "#1c1917",
-    "primaryBorderColor": "#a8a29e",
-    "secondaryColor": "#f5f5f4",
-    "tertiaryColor": "#e7e5e4",
-    "lineColor": "#78716c",
-    "clusterBkg": "#fafaf9",
-    "clusterBorder": "#d6d3d1",
-    "edgeLabelBackground": "#fafaf9"
+    "fontSize": "14px",
+    "primaryTextColor": "#0f172a",
+    "lineColor": "#94a3b8",
+    "clusterBkg": "#ffffff00",
+    "clusterBorder": "#e2e8f0",
+    "edgeLabelBackground": "#ffffff",
+    "tertiaryColor": "#f8fafc"
   },
   "flowchart": {
     "curve": "basis",
-    "padding": 12,
-    "nodeSpacing": 28,
-    "rankSpacing": 36,
+    "padding": 16,
+    "nodeSpacing": 32,
+    "rankSpacing": 40,
     "htmlLabels": true
   }
 }}%%
 flowchart TB
-  RAW[("raw takes")]:::src
-  PROF[("profile.yml")]:::cfg
+  RAW(["🎬 raw takes"]):::src
+  PROF(["🎛️ profile.yml"]):::cfg
 
-  subgraph A["①  listen"]
+  subgraph A["🎧 1 · LISTEN"]
     direction LR
-    SCAN(["scan.py"]):::job
-    ASR(["whisper.cpp"]):::job
-    PACK(["pack.py"]):::job
-    SIL(["silences.py"]):::job
-    TAKES[("takes.md")]:::art
-    GAPS[("silence gaps")]:::art
+    SCAN(["🔍 scan"]):::listen
+    ASR(["🗣️ whisper.cpp"]):::listen
+    PACK(["📄 pack"]):::listen
+    SIL(["🔇 silences"]):::listen
+    TAKES[("takes.md")]:::artBlue
+    GAPS[("gaps.json")]:::artBlue
     SCAN --> ASR --> PACK --> TAKES
     SCAN --> SIL --> GAPS
   end
 
-  subgraph B["②  cut  ·  hard gate"]
+  subgraph B["✂️ 2 · CUT  ·  HARD GATE"]
     direction LR
-    EDL[("edl.json")]:::art
-    RND(["render.py"]):::job
-    VER{"verify.py<br/>seam re-ASR"}:::gate
-    GRD(["grade.py"]):::job
-    CUT[("cut.mp4")]:::art
-    EDL --> RND --> CUT --> VER
-    VER -- "fail · fix EDL" --> EDL
-    VER -- "pass" --> GRD
+    EDL[("edl.json")]:::artAmber
+    RND(["🎞️ render"]):::cut
+    VER{"🛡️ verify<br/>seam re-ASR"}:::gate
+    GRD(["🎨 grade"]):::cut
+    CUTV[("cut.mp4")]:::artAmber
+    EDL --> RND --> CUTV --> VER
+    VER -- "❌ fail" --> EDL
+    VER -- "✅ pass" --> GRD
   end
 
-  subgraph C["③  enrich  ·  clock is locked"]
+  subgraph C["✨ 3 · ENRICH"]
     direction LR
-    CAP(["captions"]):::job
-    PRF(["capture proof"]):::job
-    SFX(["sfx + music"]):::job
-    CMP(["compose.py<br/>HyperFrames"]):::job
-    MASTER[("master.mp4")]:::out
+    CAP(["💬 captions"]):::enrich
+    PRF(["🌐 proof"]):::enrich
+    SFX(["🔊 sfx + music"]):::enrich
+    CMP(["🧩 compose"]):::enrich
+    MASTER[("master.mp4")]:::artPink
     CAP --> CMP
     PRF --> CMP
     SFX --> CMP
     CMP --> MASTER
   end
 
-  subgraph D["④  ship"]
+  subgraph D["🚀 4 · SHIP"]
     direction LR
-    DEL(["deliver.py"]):::job
-    PKG[("studio/out/<br/>variants · thumbs · post")]:::out
-    REV(["review.py"]):::job
+    DEL(["📦 deliver"]):::ship
+    PKG[("studio/out")]:::artGreen
+    REV(["👀 review"]):::ship
     DEL --> PKG --> REV
   end
 
@@ -182,15 +179,25 @@ flowchart TB
   GRD --> SFX
   MASTER --> DEL
 
-  classDef src fill:#1c1917,stroke:#FFE300,stroke-width:2px,color:#fafaf9
-  classDef cfg fill:#fffbeb,stroke:#f59e0b,stroke-width:1.5px,color:#1c1917
-  classDef job fill:#f5f5f4,stroke:#57534e,stroke-width:1.5px,color:#1c1917
-  classDef art fill:#ecfdf5,stroke:#059669,stroke-width:1.5px,color:#064e3b
-  classDef gate fill:#fff7ed,stroke:#ea580c,stroke-width:2.5px,color:#9a3412
-  classDef out fill:#1c1917,stroke:#FFE300,stroke-width:2px,color:#FFE300
+  classDef src fill:#0f172a,stroke:#facc15,stroke-width:3px,color:#fef08a
+  classDef cfg fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#92400e
+  classDef listen fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a
+  classDef cut fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#9a3412
+  classDef enrich fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87
+  classDef ship fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
+  classDef gate fill:#fee2e2,stroke:#dc2626,stroke-width:3px,color:#7f1d1d
+  classDef artBlue fill:#eff6ff,stroke:#3b82f6,stroke-width:2px,color:#1d4ed8
+  classDef artAmber fill:#fffbeb,stroke:#d97706,stroke-width:2px,color:#b45309
+  classDef artPink fill:#fdf4ff,stroke:#c026d3,stroke-width:2px,color:#86198f
+  classDef artGreen fill:#f0fdf4,stroke:#22c55e,stroke-width:2px,color:#15803d
 
-  linkStyle 8 stroke:#dc2626,stroke-width:2px
-  linkStyle 9 stroke:#059669,stroke-width:2px
+  style A fill:#eff6ff,stroke:#3b82f6,stroke-width:2px,color:#1e40af
+  style B fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#c2410c
+  style C fill:#faf5ff,stroke:#a855f7,stroke-width:2px,color:#7e22ce
+  style D fill:#f0fdf4,stroke:#22c55e,stroke-width:2px,color:#15803d
+
+  linkStyle 8 stroke:#dc2626,stroke-width:2.5px
+  linkStyle 9 stroke:#16a34a,stroke-width:2.5px
 ```
 
 `verify` blocks the cut. `review` is when you look at the package. If you change
