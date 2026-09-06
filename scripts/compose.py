@@ -144,8 +144,10 @@ def card_css(profile, width):
         white-space: nowrap;
       }}
       .card .big em {{ color: {accent}; font-style: normal; }}
+      /* Just below the chin: clear of the platform header at the top and of
+         its caption and buttons at the bottom (rules/hooks.md). */
       .band {{
-        position: absolute; top: 5.5%; left: 5%;
+        position: absolute; top: 58%; left: 5%;
         width: 90%;
         background: {accent};
         color: #0d0d10;

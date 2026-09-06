@@ -7,6 +7,22 @@ already exists — it does not have to be designed.
 
 ---
 
+## If the piece names a real thing, show it
+
+This is not optional and it is not a nice-to-have. When the speaker names a
+repo, a product, a page or a number, the edit shows that thing — captured,
+scrolled, zoomed onto the words being said, with the marker sweeping the line
+that matters.
+
+**A designed card is not a substitute.** A card saying "MEET PROMPT MASTER" is
+a claim; the repo page is evidence. An edit that talks about a real artifact
+for forty seconds and never shows it looks like the editor could not be
+bothered to look it up.
+
+**Not knowing the URL is not a reason to skip it.** Search for it. Ask. The
+only acceptable reason to omit proof is that the thing genuinely does not exist
+publicly — and then say so rather than quietly filling the beat with cards.
+
 ## Never fabricate
 
 Capture the actual page. Never mock up something that implies a screenshot of

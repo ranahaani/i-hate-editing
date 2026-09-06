@@ -71,6 +71,23 @@ def main():
         events.append((float(b["start"]), "proof",
                        f"{b.get('action')} {b.get('target') or ''}".strip()))
 
+    # --- gate: the frame must be disrupted inside the first two seconds
+    opening = [e for e in events if e[0] <= 2.0]
+
+    # --- gate: if the piece names a real artifact, proof must exist
+    named, proof_count = [], len([e for e in events if e[1] == "proof"])
+    caps = studio / "captions.json"
+    if caps.is_file():
+        try:
+            text = " ".join(c["text"] for c in
+                            json.loads(caps.read_text()).get("chunks", [])).lower()
+        except Exception:
+            text = ""
+        for cue in ("repo", "github", "link in", "comment ", "tool called",
+                    "install", "open source", "npm", "pip install"):
+            if cue in text:
+                named.append(cue)
+
     events.sort()
     if not events:
         print("no visual events at all — the whole piece is one static shot")
@@ -92,9 +109,26 @@ def main():
         prev, prev_label = t, f"{kind} {label}"
 
     print()
-    if not gaps:
+    failures = []
+    if not opening:
+        failures.append(
+            "nothing happens in the first 2s — the frame must be disrupted by a "
+            "micro-zoom, a cut, or a graphic sliding in (rules/hooks.md)")
+    if named and not proof_count:
+        failures.append(
+            f"the piece names something real ({', '.join(sorted(set(named))[:3])}) "
+            f"but shows no proof shot. Capture the page and zoom onto the words "
+            f"being said — a card is a claim, the page is evidence "
+            f"(rules/proof.md)")
+
+    for f in failures:
+        print(f"  FAIL  {f}\n")
+
+    if not gaps and not failures:
         print(f"no stretch longer than {max_gap:.1f}s without something new")
         return 0
+    if failures and not gaps:
+        return 2
 
     print(f"{len(gaps)} stretch(es) with nothing new:")
     for a, b, g, after in gaps:

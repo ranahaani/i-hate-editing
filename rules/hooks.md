@@ -5,16 +5,29 @@ amount of craft later recovers a hook that lost the viewer.
 
 ---
 
-## Three hooks run at once
+## Three hooks run at once — all three, every time
 
-The opening carries three simultaneous hooks, and they must make the *same*
-promise. Conflicting cues cause an immediate skip.
+Never lean on one. The first frame must hit from three angles at once, and all
+three must make the *same* promise. Conflicting cues cause an immediate skip.
 
-- **Visual** — motion, an expressive action, or a pattern interrupt in the
-  first frame, so the eye catches before audio is processed. A static frame is
-  the weakest possible opening.
-- **Text** — five to eight high-contrast words, readable muted.
-- **Spoken** — under about ten words, so the claim completes inside the window.
+- **Visual** — sudden movement, a change in lighting, an unusual angle, an
+  expressive reaction, or a pattern interrupt: something unexpected. A static
+  frame is the weakest possible opening.
+- **Verbal** — the very first words heard: a bold claim, a relatable pain, or
+  a tease. Under about ten words so it completes inside the window.
+- **Text** — large, high-contrast, and it must make sense **with the sound
+  off**. Most viewers are muted, so text that only works alongside the audio is
+  text that does not work.
+
+**Place the hook text just below the chin line.** Not at the top of the frame.
+The platform's header sits over the top band and its caption and buttons sit
+over the bottom and right — below the chin is the one region that is both
+clear of the interface and inside the 4:5 feed crop. High contrast, with a
+drop shadow or outline, always.
+
+**Disrupt the frame inside the first two seconds.** The brain needs a sensory
+reset: a micro-zoom, a jump cut, or a graphic sliding in. Two seconds of an
+unchanging frame is already too long, whatever is being said over it.
 
 **Kill the intro.** No dead air, no slow build, no logo. Open on the claim.
 
