@@ -6,29 +6,11 @@ The name is the origin story. This started as a note to myself: *never hand
 back work that still needs fixing by hand.*
 
 <p align="center">
-  <img src="docs/demo.gif" alt="The same seven seconds: raw take on the left, finished on the right" width="600">
+  <img src="docs/demo.gif" alt="Four moments from one edit: raw take on the left, finished on the right" width="780">
 </p>
 
-<p align="center"><em>The same seven seconds. Left: what came off the camera.
-Right: cut, graded, hook headline, kinetic captions, sound.</em></p>
-
-i-hate-editing is a skill for Claude Code and other shell-capable agents. It picks the
-best take across your retakes, cuts the filler, grades the footage, writes
-kinetic captions, captures real pages as B-roll and zooms into the thing you
-named, places sound so its peak lands on the beat, and hands you the platform
-variants and thumbnail.
-
-**Every rule in this repo was paid for by a rejected render.**
-
-That is the whole idea. Editing tools give a model ffmpeg and artistic freedom,
-and artistic freedom without taste produces the median boring cut every time.
-i-hate-editing ships roughly forty specific, numbered craft decisions — where captions
-sit, how large a zoom has to be to read, why a sound effect that does not clip
-can still be inaudible — each one learned by a human rejecting real output.
-
-**Free, local, no account.** Whisper runs on your machine. There is no API key,
-no per-minute cost, and nothing leaves your computer — which also makes it
-usable on footage you are not allowed to upload.
+<p align="center"><em>One edit, four moments. Left: what came off the camera.
+Right: what came back. <a href="docs/demo.mp4">Full clip</a>.</em></p>
 
 ## What you get
 
