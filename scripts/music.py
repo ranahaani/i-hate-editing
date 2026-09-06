@@ -58,8 +58,9 @@ def main():
     ap.add_argument("video")
     ap.add_argument("music")
     ap.add_argument("-o", "--out", default=None)
-    ap.add_argument("--level", type=float, default=0.15,
-                    help="bed gain before ducking (default 0.15)")
+    ap.add_argument("--level", type=float, default=0.12,
+                    help="bed gain before ducking; targets a -18 to -22 dBFS "
+                         "peak on the finished mix (rules/sound.md)")
     ap.add_argument("--no-duck", action="store_true", help="static level instead")
     ap.add_argument("--fade", type=float, default=0.8, help="tail fade seconds")
     args = ap.parse_args()

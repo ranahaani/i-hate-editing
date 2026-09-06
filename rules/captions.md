@@ -30,7 +30,8 @@ the cut will drift progressively.
 
 ## Chunking
 
-**Two to five words per chunk**, appearing as spoken. Never dump a whole
+**Two to three words per chunk**, appearing as spoken. Four is the hard
+ceiling and should be rare. Never dump a whole
 sentence at once — the viewer reads ahead, finishes before the speaker does,
 and disengages.
 
@@ -38,7 +39,7 @@ Break on, in priority order:
 
 1. Punctuation (a clause ended)
 2. A gap of 0.35s or more (they paused)
-3. Five words (the ceiling)
+3. Three words (four only when splitting would break a phrase)
 
 A chunk should be readable in the time it is on screen. Under ~0.4s is too
 fast to read regardless of length — merge it with its neighbour.

@@ -40,6 +40,19 @@ human would hear it. Measure the final file.
 
 ## Levels
 
+Absolute targets, measured on the finished mix:
+
+| Element | Peak | Note |
+|---|---|---|
+| Voice | −3 to −6 dBFS | Loud and clear; it is the whole point |
+| Transient SFX | −10 to −18 dBFS | Felt, not heard. Never louder than the voice's peak |
+| Music bed | −18 to −22 dBFS | Under everything, ducked further under speech |
+| Textural bed | −20 to −30 dBFS | Should register only if removed |
+
+These sit alongside the relative rule below, they do not replace it: a
+transient at −12 dBFS still reads 3–5 dB above *typical* speech, because
+typical speech sits well under its own peaks.
+
 **Transients ride above the voice. Beds sit under it.**
 
 | Kind | Duration | Level |

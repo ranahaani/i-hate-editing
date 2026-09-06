@@ -70,6 +70,25 @@ three things in one beat emphasises nothing.
 
 ---
 
+## Match the meaning, and change the framing
+
+**The insert must match the words being spoken**, not the topic in general. If
+the sentence is about a specific number, show that number — not a generic shot
+of the page it lives on.
+
+**Match the feeling, not just the noun.** "I was stuck for three days" is not
+illustrated by a neutral screenshot of the tool; it is illustrated by the error,
+the failing run, the thing that was actually stuck.
+
+**Never cut from a medium shot to another medium shot.** If the speaker is
+framed chest-up, the insert should be a tight detail or a wide view. Matching
+scales across a cut makes the change invisible and the edit feel flat — the
+brain needs to re-adjust for the cut to register as a cut.
+
+When there is no B-roll, change the framing of the face instead: cut from
+chest-up to a tighter crop on a key line. That is a real cut, and it costs
+nothing but a crop.
+
 ## Timing
 
 **The zoom lands on the spoken word.** Start the move early enough that it

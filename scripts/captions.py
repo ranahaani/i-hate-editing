@@ -23,7 +23,7 @@ from transcribe import read_profile  # noqa: E402
 
 LATE_BIAS = 0.08       # never early
 GAP_BREAK = 0.35       # a pause this long starts a new chunk
-MAX_WORDS = 5
+MAX_WORDS = 3          # four only when a split would break a phrase
 MIN_ON_SCREEN = 0.40   # shorter than this cannot be read; merge instead
 
 STOP = {

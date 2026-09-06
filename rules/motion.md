@@ -85,6 +85,35 @@ template even when the words differ. Rotate the *form*:
 Pick the form from what the sentence is doing. A list of three things wants a
 list; a single claim wants a statement; a payoff wants the full frame.
 
+## Choosing the entrance
+
+The arrival should mean something. Pick from what the element *is*, not from
+variety alone — variety is the tiebreaker between equals, not the reason.
+
+| Element | Arrival | Why |
+|---|---|---|
+| A card replacing the previous one | Slide from the side | Reads as a sequence: one thing pushes the last out |
+| The first card after the speaker | Slide down from the top | Comes from outside the frame, so the face is not "replaced" |
+| A single word, number or badge | Scale pop with a slight overshoot | Weight without travel; travel on a small object looks fussy |
+| A logo or emoji | Scale pop, faster and smaller | It is an accent, not a statement |
+| A screenshot or real page | Push in from the edge, then hold | Physical, like paper being placed down |
+| Rows in a list | Fade up a short distance, staggered | One at a time; the eye cannot track parallel arrivals |
+| A payoff or punchline | Hard cut in, masked by an impact | No animation at all is the strongest arrival when the moment earns it |
+| Returning to the face | Slide the graphic away, do not fade | A fade reads as an ending; a slide reads as a handoff |
+
+**Zoom is not an entrance.** Zoom emphasises something already on screen. If a
+card zooms as it arrives, the viewer sees two moves competing and reads
+neither.
+
+## Cards are the fallback, not the goal
+
+Real material always beats a designed card. When the speaker names a repo, a
+page, a product or a number, show that thing. Reach for a card when there is
+genuinely nothing real to show — an abstract claim, a summary, a transition of
+topic — and for the call to action.
+
+An edit where every beat is a card is a slideshow with a face attached.
+
 ## Easing
 
 Never `linear` — it reads as robotic in every context.
