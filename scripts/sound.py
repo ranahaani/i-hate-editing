@@ -24,6 +24,11 @@ from pathlib import Path
 STEP = 0.10            # sweep resolution
 MISS_MARGIN = 3.0      # window peak this far below true peak => window misses it
 STING_TARGET = 3.0     # a transient should read this many dB over the voice
+# Absolute bounds from rules/sound.md. A floor alone is a false-green gate: it
+# passes a sting that is audible *and* far too loud, including louder than the
+# voice's own peak, which the rules forbid.
+STING_CEILING_DB = -9.0
+STING_FLOOR_DB = -19.0
 AUDIO_EXT = {".mp3", ".wav", ".m4a", ".aac", ".ogg", ".flac"}
 
 
@@ -129,9 +134,20 @@ def cmd_check(args):
 
     times = list(args.at or [])
     if not times:
-        tl = video.parent / "timeline.json"
-        if tl.is_file():
-            times = json.loads(tl.read_text()).get("seams", [])
+        # The rendered master lives in out/, while timeline.json and sfx.json
+        # sit one level up in the studio. Looking only beside the video meant
+        # the command in SKILL.md always reported nothing to check.
+        for cand in (video.parent / "sfx.json", video.parent.parent / "sfx.json"):
+            if cand.is_file():
+                times = [s["hit_at"] for s in
+                         json.loads(cand.read_text()).get("sounds", [])]
+                break
+        if not times:
+            for cand in (video.parent / "timeline.json",
+                         video.parent.parent / "timeline.json"):
+                if cand.is_file():
+                    times = json.loads(cand.read_text()).get("seams", [])
+                    break
         if not times:
             print("nothing to check — pass --at, or render first so seams exist")
             return 1
@@ -141,20 +157,38 @@ def cmd_check(args):
         print("error: could not measure a voice-only baseline", file=sys.stderr)
         return 1
 
-    print(f"voice baseline: {base_mean:.1f} dB typical, {base_peak:.1f} dB peaks\n")
-    weak = []
+    print(f"voice baseline: {base_mean:.1f} dBFS typical, {base_peak:.1f} dBFS peaks")
+    print(f"sting window: {STING_FLOOR_DB:.0f} to {STING_CEILING_DB:.0f} dBFS, "
+          f"and never above the voice peak\n")
+    weak, hot = [], []
     for t in times:
         _, pk = levels(video, t - 0.05, args.window)
         if pk is None:
             continue
         delta = pk - base_mean
-        verdict = "audible" if delta >= STING_TARGET else (
-            "MARGINAL" if delta >= 1.0 else "INAUDIBLE")
-        if delta < STING_TARGET:
+        too_loud = pk > STING_CEILING_DB or (base_peak is not None
+                                             and pk > base_peak + 0.5)
+        if too_loud:
+            verdict = "TOO LOUD"
+            hot.append((t, pk))
+        elif delta >= STING_TARGET:
+            verdict = "ok"
+        elif delta >= 1.0:
+            verdict = "MARGINAL"
             weak.append((t, delta))
-        print(f"  {t:7.2f}s  {pk:6.1f} dB  {delta:+5.1f} vs voice   {verdict}")
+        else:
+            verdict = "INAUDIBLE"
+            weak.append((t, delta))
+        print(f"  {t:7.2f}s  {pk:6.1f} dBFS  {delta:+5.1f} vs voice   {verdict}")
 
     print()
+    if hot:
+        print(f"{len(hot)} sting(s) too loud — above {STING_CEILING_DB:.0f} dBFS "
+              f"or above the voice's own peak:")
+        for t, pk in hot:
+            print(f"  · {t:.2f}s at {pk:.1f} dBFS")
+        print("\nLower data-volume on these. A sting louder than the voice stops")
+        print("being punctuation and starts competing with the speaker.")
     if weak:
         print(f"{len(weak)} sting(s) below the +{STING_TARGET:.0f} dB target:")
         for t, d in weak:
@@ -162,8 +196,9 @@ def cmd_check(args):
         print("\nCheck the source file's peak placement before raising gain —")
         print("a truncated window cannot be fixed with volume:")
         print("  python3 scripts/sound.py inspect <the sfx file>")
+    if hot or weak:
         return 2
-    print("all stings read clearly above the voice")
+    print("all stings sit inside the window and above the voice")
     return 0
 
 

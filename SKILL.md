@@ -135,9 +135,59 @@ python3 scripts/sfx.py plan --studio <studio> --library <sfx>
 python3 scripts/compose.py  --studio <studio> --render
 ```
 
-Proof beats are authored by you in `proof.json`, the same way the EDL is —
-which page, which target, which move. `rules/proof.md` has the craft. This is
-where a trimmed recording becomes an edited video.
+You author three files by hand, the same way you author the EDL. They are the
+edit; the scripts only render them.
+
+**`cards.json`** — the motion vocabulary. Without it the piece is a face with
+captions, and `beats.py` will fail step 10.
+
+```json
+{"cards": [
+  {"start": 0.35, "duration": 5.1, "style": "band", "big": "SIX WORDS OR FEWER"},
+
+  {"start": 13.1, "duration": 4.2, "kicker": "small label above",
+   "big": "HEADLINE WITH *ACCENT* WORD", "sub": "one supporting line",
+   "items": [{"title": "row one", "note": "right-aligned"},
+             {"title": "row two", "note": "staggered in"}]},
+
+  {"start": 21.6, "duration": 1.9, "full": true, "big": "OWNS THE *FRAME*"}
+]}
+```
+
+`style: "band"` is the hook headline over a full frame. Default is a
+half-screen split: card on top, face below. `full: true` takes the whole frame
+and hides the face — captions are suppressed under it. `*asterisks*` mark the
+accent word. `items` makes it a numbered list. Choose the form from what the
+sentence is doing, and the arrival is chosen for you — see `rules/motion.md`.
+
+**`proof.json`** — real pages: which capture, which target, which move.
+
+```json
+{"beats": [
+  {"asset": "repo", "start": 6.9, "duration": 3.1,
+   "action": "scroll", "from_y": 60, "to_y": 560},
+  {"asset": "repo", "start": 10.1, "duration": 2.9, "action": "zoom",
+   "target": "the exact text", "highlight": true, "highlight_at": 0.75}
+]}
+```
+
+`asset` is the `--name` you gave `capture.py`. `target` must be text that
+capture found. `rules/proof.md` has the craft.
+
+**`profile.yml`** — written by `scan.py`, or by hand when it cannot run
+interactively:
+
+```yaml
+language: ur
+translate_captions: true
+aspects: ["9:16"]
+pacing: punchy            # punchy | balanced | restrained
+brand: {accent: "#FFE300", font: "Archivo Black"}
+transcription: {model: large-v3-turbo}
+face_half_y: 30           # vertical crop of the face in a split
+```
+
+This is where a trimmed recording becomes an edited video.
 
 **10 — Verify the render.** *Gate.* Frames and levels, again, plus the beat
 map:

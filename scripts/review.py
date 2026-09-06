@@ -151,7 +151,10 @@ def main():
     if args.file:
         video = Path(args.file).resolve()
     else:
-        video = next((p for p in (out / "final.mp4", out / "master.mp4")
+        # At the cut gate nothing has been delivered yet, so fall back to the
+        # cut itself — otherwise the command SKILL.md gives for step 8 errors.
+        video = next((p for p in (out / "final.mp4", out / "master.mp4",
+                                  studio / "cut_graded.mp4", studio / "cut.mp4")
                       if p.is_file()), None)
     if not video or not video.is_file():
         print(f"error: nothing to review in {out} — render first", file=sys.stderr)
