@@ -129,7 +129,8 @@ it, and a base-cut change invalidates all of them.
 
 ```bash
 python3 scripts/grade.py    cut.mp4 --strength normal   # look at the comparison
-python3 scripts/captions.py --studio <studio>
+python3 scripts/captions.py  --studio <studio>
+python3 scripts/proofread.py fix --studio <studio> --name "Claude" --name "<tool>"
 python3 scripts/capture.py  <url> --studio <studio> --find "<the phrase>"
 python3 scripts/sfx.py plan --studio <studio> --library <sfx>
 python3 scripts/compose.py  --studio <studio> --render
@@ -159,6 +160,13 @@ half-screen split: card on top, face below. `full: true` takes the whole frame
 and hides the face — captions are suppressed under it. `*asterisks*` mark the
 accent word. `items` makes it a numbered list. Choose the form from what the
 sentence is doing, and the arrival is chosen for you — see `rules/motion.md`.
+
+Captions come out of `captions.py` as a raw pass and are marked
+`proofread: false`. `proofread.py` restores product names and strips
+punctuation artefacts, but it cannot fix meaning — so it only marks them
+proofread when a model pass ran (`--llm "<any command>"`) or when you rewrote
+the copy yourself and passed `--accept`. Verification fails while the flag is
+false, because captions are the most-read thing on screen.
 
 **`proof.json`** — real pages: which capture, which target, which move.
 

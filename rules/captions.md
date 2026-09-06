@@ -101,6 +101,9 @@ JOKE,` (two sentences merged with stray punctuation), `THE WANT THIS LINK
 THEN` (garbled), and fragments cut mid-clause. Expect to rewrite most chunks
 against the timings, keeping what was actually said.
 
+`scripts/proofread.py` does the mechanical part — name restoration and
+punctuation — and refuses to declare the result proofread on its own.
+
 **Fix product and tool names by hand, every time.** ASR reliably destroys
 exactly the words the audience is watching for — "Claude" comes back as
 "cloud" almost every run. Keep a per-project list of corrections and apply it
