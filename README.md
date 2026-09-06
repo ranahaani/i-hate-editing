@@ -100,53 +100,97 @@ The model does not watch the video. Audio is the clock. Scripts do the
 mechanical work; the agent only makes taste calls.
 
 ```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "fontFamily": "ui-sans-serif, system-ui, sans-serif",
+    "fontSize": "13px",
+    "primaryColor": "#fafaf9",
+    "primaryTextColor": "#1c1917",
+    "primaryBorderColor": "#a8a29e",
+    "secondaryColor": "#f5f5f4",
+    "tertiaryColor": "#e7e5e4",
+    "lineColor": "#78716c",
+    "clusterBkg": "#fafaf9",
+    "clusterBorder": "#d6d3d1",
+    "edgeLabelBackground": "#fafaf9"
+  },
+  "flowchart": {
+    "curve": "basis",
+    "padding": 12,
+    "nodeSpacing": 28,
+    "rankSpacing": 36,
+    "htmlLabels": true
+  }
+}}%%
 flowchart TB
-  subgraph IN["inputs"]
-    RAW[("raw takes<br/>mp4 / mov")]
-    PROF[("profile.yml<br/>lang · brand · pacing")]
+  RAW[("raw takes")]:::src
+  PROF[("profile.yml")]:::cfg
+
+  subgraph A["①  listen"]
+    direction LR
+    SCAN(["scan.py"]):::job
+    ASR(["whisper.cpp"]):::job
+    PACK(["pack.py"]):::job
+    SIL(["silences.py"]):::job
+    TAKES[("takes.md")]:::art
+    GAPS[("silence gaps")]:::art
+    SCAN --> ASR --> PACK --> TAKES
+    SCAN --> SIL --> GAPS
   end
 
-  subgraph AUDIO["audio is authority"]
-    SCAN["scan.py"]
-    ASR["whisper.cpp<br/>pinned language"]
-    PACK["pack.py → takes.md"]
-    SIL["silences.py<br/>waveform gaps"]
-    SCAN --> ASR --> PACK
-    RAW --> ASR
-    RAW --> SIL
+  subgraph B["②  cut  ·  hard gate"]
+    direction LR
+    EDL[("edl.json")]:::art
+    RND(["render.py"]):::job
+    VER{"verify.py<br/>seam re-ASR"}:::gate
+    GRD(["grade.py"]):::job
+    CUT[("cut.mp4")]:::art
+    EDL --> RND --> CUT --> VER
+    VER -- "fail · fix EDL" --> EDL
+    VER -- "pass" --> GRD
   end
 
-  subgraph CUT["cut · hard gate"]
-    EDL[("edl.json")]
-    RND["render.py<br/>extract → concat"]
-    VER["verify.py<br/>seam re-ASR"]
-    GRD["grade.py"]
-    PACK --> EDL
-    SIL --> EDL
-    EDL --> RND --> VER
-    VER -->|repeats / mid-clause| EDL
-    VER -->|clean| GRD
+  subgraph C["③  enrich  ·  clock is locked"]
+    direction LR
+    CAP(["captions"]):::job
+    PRF(["capture proof"]):::job
+    SFX(["sfx + music"]):::job
+    CMP(["compose.py<br/>HyperFrames"]):::job
+    MASTER[("master.mp4")]:::out
+    CAP --> CMP
+    PRF --> CMP
+    SFX --> CMP
+    CMP --> MASTER
   end
 
-  subgraph ENRICH["enrich · timestamps locked to cut"]
-    CAP["captions.py + proofread"]
-    PRF["capture.py<br/>Playwright still"]
-    SFX["sfx.py + music.py"]
-    CMP["compose.py<br/>HyperFrames @ pinned"]
-    GRD --> CAP --> CMP
-    GRD --> PRF --> CMP
-    GRD --> SFX --> CMP
+  subgraph D["④  ship"]
+    direction LR
+    DEL(["deliver.py"]):::job
+    PKG[("studio/out/<br/>variants · thumbs · post")]:::out
+    REV(["review.py"]):::job
+    DEL --> PKG --> REV
   end
 
-  subgraph OUT["package"]
-    DEL["deliver.py"]
-    REV["review.py<br/>localhost · --lan opt-in"]
-    PKG[("studio/out/<br/>master · variants · thumbs · post.md")]
-    CMP --> DEL --> PKG --> REV
-  end
-
+  RAW --> SCAN
   PROF -.-> SCAN
   PROF -.-> CAP
+  TAKES --> EDL
+  GAPS --> EDL
+  GRD --> CAP
+  GRD --> PRF
+  GRD --> SFX
+  MASTER --> DEL
+
+  classDef src fill:#1c1917,stroke:#FFE300,stroke-width:2px,color:#fafaf9
+  classDef cfg fill:#fffbeb,stroke:#f59e0b,stroke-width:1.5px,color:#1c1917
+  classDef job fill:#f5f5f4,stroke:#57534e,stroke-width:1.5px,color:#1c1917
+  classDef art fill:#ecfdf5,stroke:#059669,stroke-width:1.5px,color:#064e3b
+  classDef gate fill:#fff7ed,stroke:#ea580c,stroke-width:2.5px,color:#9a3412
+  classDef out fill:#1c1917,stroke:#FFE300,stroke-width:2px,color:#FFE300
+
+  linkStyle 8 stroke:#dc2626,stroke-width:2px
+  linkStyle 9 stroke:#059669,stroke-width:2px
 ```
 
 `verify` blocks the cut. `review` is when you look at the package. If you change
