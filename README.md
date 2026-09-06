@@ -12,13 +12,78 @@ back work that still needs fixing by hand.*
 <p align="center">
   <em>One recording. Left is what came off the camera, right is what came back —
   and the terminal underneath is the run that produced it.
-  <a href="docs/demo.mp4">Full clip</a> ·
-  <a href="https://www.instagram.com/reel/Db3VN1Boyej/">the reel this footage came from</a>.</em>
+  <a href="https://www.instagram.com/reel/Db3VN1Boyej/">The reel this footage was recorded for</a>.</em>
 </p>
 
 Everything on the right was decided by the skill: which take to keep, that the
 repo and the docs page were worth capturing, where to zoom, which line to draw
 the marker across, what each card should be, and where every sound lands.
+
+## What it does
+
+**Cut**
+- Picks the best take across your retakes, and stitches a strong opening to a strong ending when neither take is clean throughout
+- Cuts on silence, never mid-word, with padding that absorbs transcript drift
+- Removes filler, false starts and dead air at a pace you set
+- Re-transcribes the result in windows aligned to each seam, hunting repeated words and clauses cut mid-thought
+
+**Look**
+- Half-screen cards, full-frame cards, numbered lists, and a hook band
+- An animated terminal card, for showing a command actually running
+- Brand marks and brand colours pulled from a public-domain icon set
+- Held zooms, rotating entrances chosen from what the element is, and lighting correction
+
+**Proof**
+- Captures the real page when you name a repo, a product or an article — in your delivery aspect, never a desktop screenshot squeezed into 9:16
+- Finds targets by the words you said, not CSS selectors
+- Scrolls, zooms onto the phrase, and sweeps a highlighter across the line
+- Reports a target as missing rather than substituting something close
+
+**Sound**
+- Nineteen categories, placed by what is on screen: a click per list row, a glitch cutting to a screen, a shutter when a screenshot lands
+- Every sound aligned by its **peak**, not its start, and led a frame or two ahead of the picture
+- A music bed ducked under the voice by sidechain
+
+**Captions**
+- Two to three words a chunk, timed to word onsets and biased late, never early
+- Big-keyword styling with no background box
+- Repositioned per layout, and suppressed under a full-frame card
+- Name restoration for what ASR mangles, plus an optional model pass
+
+**Gates that fail the build**
+- A stretch with nothing new on screen
+- No proof shot when the script names something real
+- A sound that is inaudible, or louder than the voice
+- Captions still carrying an unproofread machine pass
+- Nothing happening in the first two seconds
+
+**Delivered**
+- Master, platform variants, ranked thumbnail candidates, and the lines to write your post copy from
+- A local review page that opens in your browser and prints an address for your phone
+
+## How this differs from video-use
+
+[video-use](https://github.com/browser-use/video-use) is the closest thing to
+this and it is good software — eight of the correctness rules in
+`HARD-RULES.md` are adapted from it with thanks. It is also solving a
+different problem, so the two are worth telling apart.
+
+| | video-use | i-hate-editing |
+|---|---|---|
+| Scope | Any video — talking head, montage, travel, interview | Short-form talking head, one speaker |
+| Craft direction | *"Artistic freedom is the default"* — worked examples, taste left to you | Roughly forty specific rules, each stating the failure it prevents |
+| Transcription | Hosted Scribe; running Whisper locally is listed as an anti-pattern | Whisper on your machine, model chosen by language and hardware |
+| Cost | Needs an `ELEVENLABS_API_KEY` | No key, no account, nothing leaves the machine |
+| B-roll | Generated animation slots | Captures the real page you named, and marks the line you said |
+| Sound | Not covered | Nineteen categories placed semantically, verified audible in the render |
+| Memory | Per-project notes | Corrections become durable rules that apply to every future edit |
+
+If you are editing a documentary, a montage, or anything that is not one
+person talking to a camera, use video-use. It generalises and this does not.
+
+The trade this makes is deliberate: an agent handed ffmpeg and artistic freedom
+produces the median boring cut every time. Everything here is opinionated
+because taste, written down as numbers, is the part that was missing.
 
 ## What you get
 
