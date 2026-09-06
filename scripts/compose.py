@@ -33,6 +33,9 @@ TRACK_PROOF = 20
 TRACK_CAPTION = 60
 AUDIO_TRACK_CEILING = 40
 
+HYPERFRAMES_VERSION = "0.8.30"
+HYPERFRAMES_PKG = f"hyperframes@{HYPERFRAMES_VERSION}"
+
 HYPERFRAMES_JSON = {
     "$schema": "https://hyperframes.heygen.com/schema/hyperframes.json",
     "registry": "https://raw.githubusercontent.com/heygen-com/hyperframes/main/registry",
@@ -44,9 +47,9 @@ HYPERFRAMES_JSON = {
 PACKAGE_JSON = {
     "name": "i-hate-editing-composition", "private": True, "version": "1.0.0",
     "scripts": {
-        "dev": "npx --yes hyperframes preview",
-        "check": "npx --yes hyperframes check",
-        "render": "npx --yes hyperframes render",
+        "dev": f"npx --yes {HYPERFRAMES_PKG} preview",
+        "check": f"npx --yes {HYPERFRAMES_PKG} check",
+        "render": f"npx --yes {HYPERFRAMES_PKG} render",
     },
 }
 
@@ -774,7 +777,7 @@ def main():
 
     if args.check:
         print("\nchecking…")
-        r = subprocess.run(["npx", "--yes", "hyperframes", "check"], cwd=comp,
+        r = subprocess.run(["npx", "--yes", HYPERFRAMES_PKG, "check"], cwd=comp,
                            capture_output=True, text=True, errors="replace")
         tail = (r.stdout or "")[-1500:]
         print(tail.strip() or (r.stderr or "")[-800:])
@@ -786,7 +789,7 @@ def main():
         print("\nrendering…")
         out = studio / "out"
         out.mkdir(parents=True, exist_ok=True)
-        r = subprocess.run(["npx", "--yes", "hyperframes", "render", ".",
+        r = subprocess.run(["npx", "--yes", HYPERFRAMES_PKG, "render", ".",
                             "-o", str((out / "master.mp4").resolve())],
                            cwd=comp, capture_output=True, text=True, errors="replace")
         print((r.stdout or "")[-800:].strip() or (r.stderr or "")[-800:])

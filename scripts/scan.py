@@ -252,8 +252,7 @@ def setup_defaults(report, footage_dir, args):
         "brand": {"accent": args.accent, "font": args.font,
                   "caption_style": "big-keyword"},
         "transcription": {"model": model, "accel": report["accel"]},
-        "optional": {"sound_library": True, "review_gallery": True,
-                     "comment_to_dm": False},
+        "optional": {"sound_library": True},
     }
     studio = Path(footage_dir) / "studio"
     for sub in ("transcripts", "composition", "assets", "verify", "out"):
@@ -305,8 +304,6 @@ def setup(report, footage_dir):
 
     sounds = (ask("Install the sound library? (~60 free-licensed effects) (y/n)",
                   default="y") or "y").lower().startswith("y")
-    gallery = (ask("Install the local review gallery? (y/n)", default="y") or "y").lower().startswith("y")
-    growth = (ask("Install comment-to-DM automation? (y/n)", default="n") or "n").lower().startswith("y")
 
     model, reason = pick_model(lang, report["accel"], translate=(lang != "en"))
     fname, size = MODELS[model]
@@ -323,8 +320,7 @@ def setup(report, footage_dir):
         "pacing": style.split(" —")[0].lower(),
         "brand": {"accent": accent, "font": font, "caption_style": "big-keyword"},
         "transcription": {"model": model, "accel": report["accel"]},
-        "optional": {"sound_library": sounds, "review_gallery": gallery,
-                     "comment_to_dm": growth},
+        "optional": {"sound_library": sounds},
     }
 
     studio = Path(footage_dir) / "studio"
@@ -352,10 +348,6 @@ def setup(report, footage_dir):
     print(f"  scaffold {studio}")
     if sounds:
         print("  install  sound library   python3 scripts/sfx_library.py install")
-    if gallery:
-        print("  install  review gallery")
-    if growth:
-        print("  install  comment-to-DM (Meta Graph API)")
 
     print(f"\nWrote {studio / 'profile.yml'}")
     print(f"Drop your takes in {footage_dir} and say \"edit these\".\n")

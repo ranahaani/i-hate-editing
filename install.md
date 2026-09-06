@@ -32,8 +32,11 @@ Register it with your agent:
 
 ```bash
 ln -sfn ~/Developer/i-hate-editing ~/.claude/skills/i-hate-editing      # Claude Code
+ln -sfn ~/Developer/i-hate-editing ~/.cursor/skills/i-hate-editing      # Cursor
 # ln -sfn ~/Developer/i-hate-editing ~/.codex/skills/i-hate-editing     # Codex
 ```
+
+Create `~/.cursor/skills` (or `~/.claude/skills`) first if it does not exist.
 
 ## Python environment
 
@@ -42,7 +45,7 @@ library plus ffmpeg.
 
 ```bash
 uv venv .venv
-uv pip install --python .venv playwright
+uv pip install --python .venv playwright pillow
 .venv/bin/playwright install chromium
 ```
 
@@ -138,9 +141,10 @@ If all three work, the pipeline will run.
 
 ```bash
 python3 scripts/review.py --studio <footage>/studio
+python3 scripts/review.py --studio <footage>/studio --lan   # phone on trusted LAN
 ```
 
-Serves the finished video, opens it in your browser, and prints a LAN address
-for watching on a phone. `,` and `.` step a frame; space toggles play. The
-address is printed fresh each run rather than remembered, because it changes
-with the network.
+Serves the finished video and opens it in your browser. By default it binds
+**localhost only**. Pass `--lan` to print a LAN address for watching on a
+phone — only on a trusted network; that mode has no authentication. `,` and
+`.` step a frame; space toggles play.

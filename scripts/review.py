@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Serve the finished video and open it in a browser.
 
-Self-contained: no configuration, no remembered address. It picks a free port,
-prints both the local and LAN URLs, and opens the local one. The LAN URL is
-printed fresh every run because a machine's IP changes with the network, and a
-remembered one silently stops working.
+Self-contained: no configuration, no remembered address. By default it binds
+localhost only. Pass --lan to expose on the local network for phone preview —
+only do that on a trusted network; the server has no authentication.
 
     python3 scripts/review.py --studio <footage>/studio
+    python3 scripts/review.py --studio ... --lan
     python3 scripts/review.py --studio ... --no-open
 """
 
@@ -107,11 +107,11 @@ def lan_ip():
         s.close()
 
 
-def free_port(preferred=8777):
+def free_port(preferred=8777, host="127.0.0.1"):
     for port in (preferred, 0):
         try:
             s = socket.socket()
-            s.bind(("", port))
+            s.bind((host, port))
             p = s.getsockname()[1]
             s.close()
             return p
@@ -142,6 +142,9 @@ def main():
     ap.add_argument("--studio", default="studio")
     ap.add_argument("--file", default=None, help="specific video to review")
     ap.add_argument("--port", type=int, default=None)
+    ap.add_argument("--lan", action="store_true",
+                    help="bind on all interfaces and print a phone/LAN URL "
+                         "(default is localhost only)")
     ap.add_argument("--no-open", action="store_true")
     args = ap.parse_args()
 
@@ -176,7 +179,8 @@ def main():
                        versions=versions, copy=copy_html)
     (root / "_review.html").write_text(page)
 
-    port = args.port or free_port()
+    host = "0.0.0.0" if args.lan else "127.0.0.1"
+    port = args.port or free_port(host=host)
 
     class Handler(http.server.SimpleHTTPRequestHandler):
         def __init__(self, *a, **kw):
@@ -191,15 +195,20 @@ def main():
             pass
 
     socketserver.TCPServer.allow_reuse_address = True
-    server = socketserver.TCPServer(("", port), Handler)
+    server = socketserver.TCPServer((host, port), Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
     local = f"http://localhost:{port}/"
-    ip = lan_ip()
     print(f"reviewing {video.name}  ({probe(video)})", flush=True)
     print(f"\n  this machine   {local}", flush=True)
-    if ip:
-        print(f"  phone / LAN    http://{ip}:{port}/", flush=True)
+    if args.lan:
+        ip = lan_ip()
+        if ip:
+            print(f"  phone / LAN    http://{ip}:{port}/", flush=True)
+        else:
+            print("  phone / LAN    (could not detect a LAN address)", flush=True)
+    else:
+        print("  phone preview  re-run with --lan on a trusted network", flush=True)
     print("\n  , and . step one frame · space toggles play", flush=True)
     print("  ctrl-c to stop\n", flush=True)
 

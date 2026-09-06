@@ -117,11 +117,13 @@ anything.
 
 ```bash
 python3 scripts/review.py --studio <footage>/studio
+# phone preview on a trusted network only:
+# python3 scripts/review.py --studio <footage>/studio --lan
 ```
 
-Opens it in a browser with frame-stepping, and prints a LAN address for
-checking on a phone. Never hand over a remembered URL — a machine's IP changes
-with the network and a stale one wastes a round-trip. **STOP.** Do not build captions,
+Opens it in a browser with frame-stepping on **localhost**. Pass `--lan` only
+on a trusted network if you need a phone URL — that mode has no auth, and a
+machine's IP changes with the network anyway. **STOP.** Do not build captions,
 motion or sound on an unapproved cut — every downstream timestamp depends on
 it, and a base-cut change invalidates all of them.
 

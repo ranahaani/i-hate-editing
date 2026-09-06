@@ -26,7 +26,9 @@ Every run returns a package, because that is what an editor hands back:
 ```bash
 git clone https://github.com/ranahaani/i-hate-editing ~/Developer/i-hate-editing
 ln -sfn ~/Developer/i-hate-editing ~/.claude/skills/i-hate-editing     # Claude Code
-cd ~/Developer/i-hate-editing && uv venv .venv && uv pip install --python .venv playwright
+ln -sfn ~/Developer/i-hate-editing ~/.cursor/skills/i-hate-editing     # Cursor
+# ln -sfn ~/Developer/i-hate-editing ~/.codex/skills/i-hate-editing    # Codex
+cd ~/Developer/i-hate-editing && uv venv .venv && uv pip install --python .venv playwright pillow
 brew install ffmpeg whisper-cpp                          # macOS
 ```
 
@@ -117,14 +119,30 @@ it cost is the most useful contribution you can make.
 | `ffmpeg` / `ffprobe` | All media processing | Yes |
 | `whisper.cpp` | Transcription, local | Yes |
 | `node` 22+ | HyperFrames compositions | Yes — Claude Code needs it anyway |
-| `playwright` | Capturing pages for proof B-roll | For proof shots |
+| `playwright` + `pillow` | Proof capture + thumbnail ranking | For proof / deliver |
 | `yt-dlp` | Downloading reference footage | Optional |
+
+## Disclaimers
+
+- **Your footage stays local**, but scripts can still open network URLs (proof
+  capture), download free SFX (Mixkit), or pull a pinned HyperFrames package
+  via `npx`. See [`SECURITY.md`](./SECURITY.md).
+- **`yt-dlp` and music beds:** you are responsible for the copyright status of
+  anything you download or mux under speech. This skill does not grant rights
+  to third-party media.
+- **Mixkit SFX** are fetched at install time under Mixkit's free licence as
+  recorded per file. Scraped category pages can change; if install fails,
+  placement skips missing categories.
+- **Brand marks** (Simple Icons / Lucide) are for editorial use in your own
+  videos. Respect each company's trademark guidelines for commercial ads.
+- **Review on a phone:** `scripts/review.py` defaults to localhost. Pass
+  `--lan` only on a trusted network — that mode has no authentication.
 
 ## Credit
 
-Composition and rendering by [HyperFrames](https://github.com/heygen-com/hyperframes).
-Several production-correctness rules are adapted from
-[video-use](https://github.com/browser-use/video-use) (MIT), which isolated
-them cleanly.
+Composition and rendering by [HyperFrames](https://github.com/heygen-com/hyperframes)
+(pinned in `scripts/compose.py`). Several production-correctness rules are
+adapted from [video-use](https://github.com/browser-use/video-use) (MIT), which
+isolated them cleanly.
 
-MIT licensed.
+MIT licensed. Report vulnerabilities via [`SECURITY.md`](./SECURITY.md).
