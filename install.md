@@ -108,6 +108,12 @@ cd /path/to/your/footage
 python3 ~/.claude/skills/i-hate-editing/scripts/scan.py --footage .
 ```
 
+No terminal, or scripting it? Set up without prompts:
+
+```bash
+python3 scripts/scan.py --footage . --defaults --lang ur --format short
+```
+
 It reports what it found, asks five questions, and writes `studio/profile.yml`
 next to your footage. Then start your agent in that directory and ask it to
 edit.

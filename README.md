@@ -5,6 +5,13 @@ Drop in raw talking-head takes, get back a finished, publishable video.
 The name is the origin story. This started as a note to myself: *never hand
 back work that still needs fixing by hand.*
 
+<p align="center">
+  <img src="docs/demo.gif" alt="The same seven seconds: raw take on the left, finished on the right" width="600">
+</p>
+
+<p align="center"><em>The same seven seconds. Left: what came off the camera.
+Right: cut, graded, hook headline, kinetic captions, sound.</em></p>
+
 i-hate-editing is a skill for Claude Code and other shell-capable agents. It picks the
 best take across your retakes, cuts the filler, grades the footage, writes
 kinetic captions, captures real pages as B-roll and zooms into the thing you

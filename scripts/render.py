@@ -51,7 +51,8 @@ def clamp_pad(v):
     return max(PAD_MIN, min(PAD_MAX, float(v)))
 
 
-def extract(src, start, end, dst, target, grade, preview, speed=1.0):
+def extract(src, start, end, dst, target, grade, preview, speed=1.0,
+            zoom=1.0, zoom_y=0.42):
     """Encode one segment: normalised geometry, graded, with edge fades.
 
     Speed is applied here rather than to the finished cut so that the timeline
@@ -65,9 +66,16 @@ def extract(src, start, end, dst, target, grade, preview, speed=1.0):
     if preview:
         w, h = (w // 2 // 2) * 2, (h // 2 // 2) * 2
 
-    vf = [f"scale={w}:{h}:force_original_aspect_ratio=decrease",
-          f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2",
-          f"fps={fps}", "setsar=1"]
+    vf = []
+    if zoom > 1.001:
+        # Reframe by cropping in. rules/proof.md calls for changing the shot
+        # scale when there is no B-roll — cutting chest-up to a tighter crop is
+        # a real cut. zoom_y biases the crop upward because faces sit high.
+        vf.append(f"crop=iw/{zoom:.4f}:ih/{zoom:.4f}:"
+                  f"(iw-iw/{zoom:.4f})/2:(ih-ih/{zoom:.4f})*{zoom_y:.3f}")
+    vf += [f"scale={w}:{h}:force_original_aspect_ratio=decrease",
+           f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2",
+           f"fps={fps}", "setsar=1"]
     if grade:
         vf.insert(0, grade)
 
@@ -182,7 +190,8 @@ def main():
         start = max(0.0, float(r["start"]) - pad_in)
         end = min(sinfo["duration"], float(r["end"]) + pad_out)
         dst = work / f"seg_{i:03d}.mp4"
-        extract(src, start, end, dst, target, grade, args.preview, speed)
+        extract(src, start, end, dst, target, grade, args.preview, speed,
+                float(r.get("zoom", 1.0)), float(r.get("zoom_y", 0.42)))
         d = probe(dst)[2]
         timeline.append({
             "index": i,
@@ -195,8 +204,9 @@ def main():
         })
         cursor += d
         parts.append(dst)
+        zl = f"  {float(r.get('zoom', 1.0)):.2f}x" if float(r.get("zoom", 1.0)) > 1.001 else ""
         print(f"  [{i:02d}] {r.get('beat') or '-':<12} {r['source']} "
-              f"{start:7.2f}-{end:7.2f}  ->  {timeline[-1]['out_start']:7.2f}")
+              f"{start:7.2f}-{end:7.2f}  ->  {timeline[-1]['out_start']:7.2f}{zl}")
 
     out = Path(args.out) if args.out else studio / ("preview.mp4" if args.preview else "cut.mp4")
     out.parent.mkdir(parents=True, exist_ok=True)

@@ -91,6 +91,12 @@ lead the other:
 
 Both make a join feel intentional rather than mechanical.
 
+**The bundled renderer cannot do this yet.** It extracts each range as one
+segment and concatenates, so audio and video share an edge by construction.
+The technique is recorded because it is the right instinct and because the EDL
+may grow a separate audio offset — but do not plan an edit around it today,
+and do not claim an edit has J-cuts when it does not.
+
 ## Verifying a cut
 
 A cut is not finished until it has been re-transcribed **in windows aligned to

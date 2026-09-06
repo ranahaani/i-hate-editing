@@ -103,7 +103,9 @@ brain needs to re-adjust for the cut to register as a cut.
 
 When there is no B-roll, change the framing of the face instead: cut from
 chest-up to a tighter crop on a key line. That is a real cut, and it costs
-nothing but a crop.
+nothing but a crop. Put `"zoom": 1.25` on an EDL range for a medium, `1.55`
+with `"zoom_y": 0.30` for a close-up — the vertical bias exists because faces
+sit high in frame.
 
 ## Timing
 

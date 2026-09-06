@@ -231,6 +231,48 @@ def yaml_dump(profile):
     return "\n".join(lines) + "\n"
 
 
+def setup_defaults(report, footage_dir, args):
+    """Non-interactive setup.
+
+    scan.py was interactive-only, so there was no supported path for an agent,
+    a script or CI — the schema had to be reverse-engineered from this file."""
+    lang = args.lang.lower().split("-")[0]
+    fmt = {"short": "Short-form vertical", "youtube": "YouTube talking-head",
+           "both": "Both"}[args.format]
+    aspects = {"short": ["9:16"], "youtube": ["16:9"],
+               "both": ["9:16", "16:9"]}[args.format]
+    model, reason = pick_model(lang, report["accel"], translate=(lang != "en"))
+
+    profile = {
+        "language": lang,
+        "translate_captions": lang != "en",
+        "format": fmt,
+        "aspects": aspects,
+        "pacing": "punchy",
+        "brand": {"accent": args.accent, "font": args.font,
+                  "caption_style": "big-keyword"},
+        "transcription": {"model": model, "accel": report["accel"]},
+        "optional": {"sound_library": True, "review_gallery": True,
+                     "comment_to_dm": False},
+    }
+    studio = Path(footage_dir) / "studio"
+    for sub in ("transcripts", "composition", "assets", "verify", "out"):
+        (studio / sub).mkdir(parents=True, exist_ok=True)
+    (studio / "profile.yml").write_text(yaml_dump(profile))
+    taste = studio / "taste.md"
+    if not taste.exists():
+        taste.write_text(
+            "# Taste\n\nDurable feedback. Read before every edit; appended "
+            "after every review.\n\n")
+    print(f"\nprofile   language {lang} · {fmt} · model {model}")
+    print(f"          {reason}")
+    print(f"wrote     {studio / 'profile.yml'}")
+    missing = [m["install"] for m in report["missing"] if m["required"]]
+    if missing:
+        print("install   " + "; ".join(sorted(set(missing))))
+    return profile
+
+
 def setup(report, footage_dir):
     print("\n" + "─" * 58)
     print("Setup — answer five questions, then nothing else is asked of you.")
@@ -324,6 +366,13 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", action="store_true", help="scan only, machine-readable")
     ap.add_argument("--footage", default=".", help="footage directory to scaffold beside")
+    ap.add_argument("--defaults", action="store_true",
+                    help="set up without prompting; combine with --lang/--format")
+    ap.add_argument("--lang", default="en", help="ISO language code, with --defaults")
+    ap.add_argument("--format", default="short",
+                    choices=["short", "youtube", "both"], help="with --defaults")
+    ap.add_argument("--accent", default="#FFE300", help="brand accent, with --defaults")
+    ap.add_argument("--font", default="Archivo Black", help="display font, with --defaults")
     args = ap.parse_args()
 
     report = scan()
@@ -341,8 +390,11 @@ def main():
             print(f"  {m['install']}")
         print("\nContinuing setup anyway; nothing runs until they exist.")
 
-    if not sys.stdin.isatty():
-        print("\nNot a terminal — run without --json in an interactive shell to set up.")
+    if args.defaults or not sys.stdin.isatty():
+        if not args.defaults:
+            print("\nNot a terminal — using defaults. Pass --defaults explicitly, "
+                  "with --lang/--format, to choose.")
+        setup_defaults(report, args.footage, args)
         return 0
 
     setup(report, args.footage)
