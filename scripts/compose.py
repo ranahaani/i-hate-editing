@@ -322,13 +322,19 @@ def build_cards(cards, width, height, face_half_y, studio_dir="."):
             f'ease: "power3.in" }}, {end - 0.22:.2f});')
         anims.append(f'      tl.set("#{cid} .inner", {{ opacity: 0 }}, {end:.2f});')
 
-        # List rows arrive one at a time — the eye cannot track two new things
-        # at once (rules/motion.md).
+        # List rows arrive one at a time, far enough apart to read as separate
+        # events. A tight stagger reads as one block fading in, which defeats
+        # the point of a list (rules/motion.md).
+        ROW_GAP = 0.30
         for n in range(len(c.get("items") or [])):
+            at = start + 0.40 + n * ROW_GAP
             anims.append(
-                f'      tl.from("#{cid}r{n}", {{ opacity: 0, y: 26, '
-                f'duration: 0.22, ease: "power2.out" }}, '
-                f'{start + 0.34 + n * 0.16:.2f});')
+                f'      tl.from("#{cid}r{n}", {{ opacity: 0, x: -46, '
+                f'duration: 0.34, ease: "back.out(1.5)" }}, {at:.2f});')
+            # the number lands a beat after its row, so the eye follows it
+            anims.append(
+                f'      tl.from("#{cid}r{n} .n", {{ opacity: 0, scale: 0.4, '
+                f'duration: 0.26, ease: "back.out(2.6)" }}, {at + 0.10:.2f});')
         # A held zoom on the key word, err large (rules/motion.md).
         hold_at = start + 0.45
         anims.append(

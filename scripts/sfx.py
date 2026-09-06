@@ -168,7 +168,7 @@ def main():
         # Each list row lands with a click, staggered with the row animation.
         items = c.get("items") or []
         for n in range(len(items)):
-            events.append({"at": start + 0.34 + n * 0.16, "category": "click",
+            events.append({"at": start + 0.40 + n * 0.30, "category": "click",
                            "mandatory": True, "why": f"list row {n + 1}"})
 
         # The headline's held zoom gets an accent — a ding when the card is a

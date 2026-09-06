@@ -97,7 +97,7 @@ variety alone — variety is the tiebreaker between equals, not the reason.
 | A single word, number or badge | Scale pop with a slight overshoot | Weight without travel; travel on a small object looks fussy |
 | A logo or emoji | Scale pop, faster and smaller | It is an accent, not a statement |
 | A screenshot or real page | Push in from the edge, then hold | Physical, like paper being placed down |
-| Rows in a list | Fade up a short distance, staggered | One at a time; the eye cannot track parallel arrivals |
+| Rows in a list | Slide in from the left, ~0.3s apart | One at a time, far enough apart to read as separate events. A tight stagger looks like one block fading in |
 | A payoff or punchline | Hard cut in, masked by an impact | No animation at all is the strongest arrival when the moment earns it |
 | Returning to the face | Slide the graphic away, do not fade | A fade reads as an ending; a slide reads as a handoff |
 
