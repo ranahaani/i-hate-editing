@@ -6,11 +6,18 @@ The name is the origin story. This started as a note to myself: *never hand
 back work that still needs fixing by hand.*
 
 <p align="center">
-  <img src="docs/demo.gif" alt="Left: the raw take. Right: what the skill hands back." width="820">
+  <img src="docs/demo.gif" alt="One recording, two phones: the raw take on the left, the finished reel on the right, with the pipeline running in a terminal below." width="820">
 </p>
 
-<p align="center"><em>Same recording, both phones. Left is what came off the
-camera; right is what came back. <a href="docs/demo.mp4">Full clip</a>.</em></p>
+<p align="center">
+  <em>One recording. Left is what came off the camera, right is what came back —
+  and the terminal underneath is the run that produced it.
+  <a href="docs/demo.mp4">Full clip</a>.</em>
+</p>
+
+Everything on the right was decided by the skill: which take to keep, that the
+repo and the docs page were worth capturing, where to zoom, which line to draw
+the marker across, what each card should be, and where every sound lands.
 
 ## What you get
 
