@@ -6,10 +6,10 @@ The name is the origin story. This started as a note to myself: *never hand
 back work that still needs fixing by hand.*
 
 <p align="center">
-  <img src="docs/demo.gif" alt="Four moments from one edit: raw take on the left, finished on the right" width="780">
+  <img src="docs/demo.gif" alt="Five moments from one edit: raw take on the left, finished on the right" width="780">
 </p>
 
-<p align="center"><em>One edit, four moments. Left: what came off the camera.
+<p align="center"><em>One edit, five moments. Left: what came off the camera.
 Right: what came back. <a href="docs/demo.mp4">Full clip</a>.</em></p>
 
 ## What you get
