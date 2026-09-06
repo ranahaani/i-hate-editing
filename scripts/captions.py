@@ -235,6 +235,9 @@ def main():
         "language": prof.get("language"),
         "translated": prefer_translate,
         "late_bias": LATE_BIAS,
+        # Raw until a human or agent rewrites it. rules/captions.md is explicit
+        # that a machine pass is a draft, and the verification gate checks this.
+        "proofread": False,
         "chunks": out_chunks,
     }, indent=2, ensure_ascii=False))
 

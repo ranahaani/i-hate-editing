@@ -14,6 +14,7 @@ Counts every visible event across the composition and reports the gaps.
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -74,6 +75,24 @@ def main():
     # --- gate: the frame must be disrupted inside the first two seconds
     opening = [e for e in events if e[0] <= 2.0]
 
+    # --- gate: captions must have been proofread
+    raw_caption_flags = []
+    capf = studio / "captions.json"
+    if capf.is_file():
+        try:
+            cd = json.loads(capf.read_text())
+        except Exception:
+            cd = {}
+        chunks = cd.get("chunks", [])
+        if chunks and not cd.get("proofread"):
+            raw_caption_flags.append("captions.json has no proofread flag")
+        # Shapes that only appear in an untouched machine pass.
+        for c in chunks:
+            t = c.get("text", "")
+            if re.search(r'["""]|\s[,.]|\.\s*\w+,\s*$', t) or len(t.split()) > 4:
+                raw_caption_flags.append(f'"{t[:38]}"')
+        raw_caption_flags = raw_caption_flags[:4]
+
     # --- gate: if the piece names a real artifact, proof must exist
     named, proof_count = [], len([e for e in events if e[1] == "proof"])
     caps = studio / "captions.json"
@@ -114,6 +133,11 @@ def main():
         failures.append(
             "nothing happens in the first 2s — the frame must be disrupted by a "
             "micro-zoom, a cut, or a graphic sliding in (rules/hooks.md)")
+    if raw_caption_flags:
+        failures.append(
+            "captions look unproofread — " + "; ".join(raw_caption_flags) +
+            ". Machine translation is a draft, not caption copy; rewrite it and "
+            "set proofread: true (rules/captions.md)")
     if named and not proof_count:
         failures.append(
             f"the piece names something real ({', '.join(sorted(set(named))[:3])}) "
