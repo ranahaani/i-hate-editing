@@ -81,6 +81,16 @@ hard-cuts straight into the body feels rushed even when every word is right.
 
 ---
 
+## Split the audio and video edges
+
+Cutting both tracks on the same frame is the most obvious kind of cut. Let one
+lead the other:
+
+- **J-cut** — the next clip's audio starts slightly before its picture.
+- **L-cut** — the picture changes while the previous audio runs on a moment.
+
+Both make a join feel intentional rather than mechanical.
+
 ## Verifying a cut
 
 A cut is not finished until it has been re-transcribed **in windows aligned to

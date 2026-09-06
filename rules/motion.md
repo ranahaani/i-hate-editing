@@ -71,6 +71,20 @@ both "at that beat."
 
 ---
 
+## Vary the shape, not just the timing
+
+Repeating one card layout is the same defect as repeating one entrance. If
+three consecutive beats are a headline with a sub-line, the piece reads as a
+template even when the words differ. Rotate the *form*:
+
+- A statement — kicker, headline, supporting line
+- A numbered list, rows arriving one at a time
+- A full-frame card where the graphic owns the screen and the face steps away
+- A real screenshot with a zoom onto the thing being said
+
+Pick the form from what the sentence is doing. A list of three things wants a
+list; a single claim wants a statement; a payoff wants the full frame.
+
 ## Easing
 
 Never `linear` — it reads as robotic in every context.
@@ -78,6 +92,9 @@ Never `linear` — it reads as robotic in every context.
 - `power2.out` / `power3.out` for arrivals: fast in, slow landing.
 - `back.out` for a pop that should overshoot slightly.
 - `power2.inOut` for a continuous move like a scroll or a drift.
+
+Add motion blur to anything that slides on quickly. Without it fast movement
+looks choppy, which is one of the clearest amateur tells.
 
 ---
 

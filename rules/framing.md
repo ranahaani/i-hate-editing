@@ -48,6 +48,24 @@ If a punch is wanted at that moment, put it on the card's content instead.
 
 ---
 
+## The platform covers part of your frame
+
+Reels are shot 9:16 but the feed crops to 4:5, and the app's own interface sits
+on top of what remains. Anything essential outside these bounds is either cut
+off or covered:
+
+| Zone | Reserved for |
+|---|---|
+| Top ~15% | Platform header |
+| Bottom ~25% | Caption, audio name, controls |
+| Right ~15% | Like, comment, share buttons |
+
+Captions placed at 16% from the bottom sit underneath the app's own caption —
+readable in your render, obscured in the feed. Keep burned-in text above ~27%.
+
+Position the speaker's eyes on the upper third. It reads as eye contact and
+leaves the space below for text.
+
 ## Nothing lands on the face
 
 No overlay, popup, logo, badge, or caption sits over the face. Full-frame

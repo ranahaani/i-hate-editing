@@ -5,6 +5,19 @@ amount of craft later recovers a hook that lost the viewer.
 
 ---
 
+## Three hooks run at once
+
+The opening carries three simultaneous hooks, and they must make the *same*
+promise. Conflicting cues cause an immediate skip.
+
+- **Visual** — motion, an expressive action, or a pattern interrupt in the
+  first frame, so the eye catches before audio is processed. A static frame is
+  the weakest possible opening.
+- **Text** — five to eight high-contrast words, readable muted.
+- **Spoken** — under about ten words, so the claim completes inside the window.
+
+**Kill the intro.** No dead air, no slow build, no logo. Open on the claim.
+
 ## Frame one is a face
 
 Open on the speaker, never on a design card, a logo, or a title screen. A
@@ -61,6 +74,8 @@ cutting rules preserve it deliberately.
 ## Proof early
 
 If there is a number, a screenshot, or a real page that backs the claim, show
-it inside the first six seconds. A claim with a receipt attached is a different
+it inside the first three seconds — it doubles as the visual hook, and a real
+page appearing under a spoken claim is a stronger interrupt than any designed
+card. A claim with a receipt attached is a different
 proposition from a claim alone, and this is the moment the viewer is deciding
 whether the speaker actually knows anything.

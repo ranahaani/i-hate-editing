@@ -107,13 +107,29 @@ def main():
     # Remaining cut transitions get a whoosh. No pop where an impact already
     # lands — stacked transients mush into one distorted blob.
     for s in seams[1:]:
-        events.append({"at": s, "category": "whoosh", "why": "cut transition"})
+        events.append({"at": s, "category": "whoosh", "mandatory": True,
+                       "why": "cut transition"})
+
+    # Cards are layout changes too. Missing these left more than half the
+    # reel with graphics arriving in silence, which reads as unfinished.
+    for c in (json.loads((studio / "cards.json").read_text()).get("cards", [])
+              if (studio / "cards.json").is_file() else []):
+        start, dur = float(c["start"]), float(c["duration"])
+        kind = "pop" if c.get("style") == "band" else "whoosh"
+        events.append({"at": start, "category": kind, "mandatory": True,
+                       "why": "band in" if kind == "pop" else "card in"})
+        if c.get("style") != "band" and dur > 1.6:
+            # the headline's held zoom gets its own accent
+            events.append({"at": start + 0.45, "category": "pop",
+                           "why": "headline pops"})
 
     # Proof shots slide in and out; both movements are layout changes.
     for b in beats:
         start, dur = float(b["start"]), float(b["duration"])
-        events.append({"at": start, "category": "whoosh", "why": "proof enters"})
-        events.append({"at": start + dur - 0.2, "category": "whoosh", "why": "proof exits"})
+        events.append({"at": start, "category": "whoosh", "mandatory": True,
+                       "why": "proof enters"})
+        events.append({"at": start + dur - 0.2, "category": "whoosh",
+                       "mandatory": True, "why": "proof exits"})
         if b.get("highlight"):
             events.append({"at": start + float(b.get("highlight_at", 0.7)),
                            "category": "pop", "why": "highlight sweep"})
@@ -141,6 +157,10 @@ def main():
     # The ceiling is a budget on optional accents. Mandatory stings are never
     # thinned — the rule caps total moments, it does not license skipping the
     # ones that must fire.
+    # The ceiling governs optional accents only. Every layout change gets a
+    # sound — that is the floor, and a graphic arriving in silence reads as an
+    # unfinished edit (rules/sound.md). A piece with a card every few seconds
+    # legitimately carries more sounds than a face-only one.
     ceiling = max(3, int(DENSITY_PER_15S * (duration / 15.0))) if duration else len(kept)
     must = [e for e in kept if e.get("mandatory")]
     optional = [e for e in kept if not e.get("mandatory")]

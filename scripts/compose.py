@@ -67,13 +67,19 @@ def caption_css(profile, width):
       .caption {{
         position: absolute;
         left: 5%; width: 90%;
-        bottom: 16%;
+        /* Clear of Instagram's own UI, which covers the bottom ~25% with the
+           caption and audio name. 16% put text underneath it. */
+        bottom: 27%;
         text-align: center;
         font-family: "{font}", sans-serif;
         line-height: 1.12;
         text-shadow: {shadow};
         text-transform: uppercase;
       }}
+      /* During a half-split the face occupies the bottom half, so a caption in
+         its usual place lands on the speaker's eyes. It moves into the card's
+         empty lower region instead (rules/framing.md). */
+      .caption.split {{ bottom: 52%; }}
       .caption .w {{
         display: inline-block;
         margin: 0 0.12em;
@@ -151,6 +157,27 @@ def card_css(profile, width):
         padding: {round(width * 0.022)}px {round(width * 0.02)}px;
         box-shadow: 10px 10px 0 rgba(0,0,0,0.35);
       }}
+      .card.full {{ height: 100%; justify-content: center; }}
+      .card .rows {{
+        display: flex; flex-direction: column; gap: {round(width * 0.016)}px;
+        width: 100%; margin-top: {round(width * 0.026)}px;
+      }}
+      .card .row {{
+        display: flex; align-items: baseline; gap: {round(width * 0.018)}px;
+        background: #f4f6f8; color: #10131a;
+        border-radius: {round(width * 0.012)}px;
+        padding: {round(width * 0.020)}px {round(width * 0.022)}px;
+        text-align: left;
+      }}
+      .card .row .n {{
+        font-size: {round(width * 0.026)}px; color: #6b7686;
+        min-width: {round(width * 0.030)}px;
+      }}
+      .card .row .t {{ font-size: {round(width * 0.046)}px; line-height: 1.1; }}
+      .card .row .d {{
+        font-size: {round(width * 0.030)}px; color: #5c6472;
+        font-weight: 400; margin-left: auto; text-align: right;
+      }}
       .card .sub {{
         font-size: {round(width * 0.040)}px;
         line-height: 1.35;
@@ -168,6 +195,7 @@ def build_cards(cards, width, height, face_half_y):
     being moved into a half produces glitches that only show in motion
     (rules/framing.md)."""
     clips, anims = [], []
+    card_index = 0
     FULL = 'top: "0px", height: "100%", objectPosition: "50% 50%"'
     HALF = (f'top: "50%", height: "50%", '
             f'objectPosition: "50% {face_half_y:.0f}%"')
@@ -216,24 +244,56 @@ def build_cards(cards, width, height, face_half_y):
             inner += f'<div class="kicker">{html.escape(c["kicker"])}</div>'
         inner += (f'<div class="big" id="{cid}big" '
                   f'style="font-size:{size}px">{big}</div>')
+        if c.get("items"):
+            rows = "".join(
+                f'<div class="row" id="{cid}r{n}">'
+                f'<span class="n">{n + 1}</span>'
+                f'<span class="t">{html.escape(it.get("title", ""))}</span>'
+                + (f'<span class="d">{html.escape(it["note"])}</span>'
+                   if it.get("note") else "")
+                + "</div>"
+                for n, it in enumerate(c["items"]))
+            inner += f'<div class="rows">{rows}</div>'
         if c.get("sub"):
             inner += f'<div class="sub">{html.escape(c["sub"])}</div>'
 
+        full = " full" if c.get("full") else ""
         clips.append(
             f'      <div id="{cid}" class="clip" data-start="{start:.2f}" '
             f'data-duration="{dur:.2f}" data-track-index="{TRACK_CARD + i}">\n'
-            f'        <div class="inner card">{inner}</div>\n'
+            f'        <div class="inner card{full}">{inner}</div>\n'
             f'      </div>')
 
-        anims.append(f'      tl.set("#face", {{ {HALF} }}, {start:.2f});')
-        anims.append(f'      tl.set("#face", {{ {FULL} }}, {end:.2f});')
+        if not c.get("full"):
+            anims.append(f'      tl.set("#face", {{ {HALF} }}, {start:.2f});')
+            anims.append(f'      tl.set("#face", {{ {FULL} }}, {end:.2f});')
+
+        # Rotate the entrance. Repeating one arrival makes an edit feel
+        # automated, which it is, and the point is that it should not look it
+        # (rules/motion.md).
+        ENTRANCES = [
+            ("{ xPercent: 110 }", "{ xPercent: -110 }"),
+            ("{ yPercent: -110 }", "{ yPercent: -110 }"),
+            ("{ scale: 0.82, opacity: 0 }", "{ scale: 1.06, opacity: 0 }"),
+            ("{ xPercent: -110 }", "{ xPercent: 110 }"),
+        ]
+        enter, leave = ENTRANCES[card_index % len(ENTRANCES)]
+        card_index += 1
         anims.append(
-            f'      tl.from("#{cid} .inner", {{ xPercent: 110, duration: 0.26, '
+            f'      tl.from("#{cid} .inner", {{ ...{enter}, duration: 0.28, '
             f'ease: "power3.out" }}, {start:.2f});')
         anims.append(
-            f'      tl.to("#{cid} .inner", {{ xPercent: -110, duration: 0.22, '
+            f'      tl.to("#{cid} .inner", {{ ...{leave}, duration: 0.22, '
             f'ease: "power3.in" }}, {end - 0.22:.2f});')
-        anims.append(f'      tl.set("#{cid} .inner", {{ xPercent: -110 }}, {end:.2f});')
+        anims.append(f'      tl.set("#{cid} .inner", {{ opacity: 0 }}, {end:.2f});')
+
+        # List rows arrive one at a time — the eye cannot track two new things
+        # at once (rules/motion.md).
+        for n in range(len(c.get("items") or [])):
+            anims.append(
+                f'      tl.from("#{cid}r{n}", {{ opacity: 0, y: 26, '
+                f'duration: 0.22, ease: "power2.out" }}, '
+                f'{start + 0.34 + n * 0.16:.2f});')
         # A held zoom on the key word, err large (rules/motion.md).
         hold_at = start + 0.45
         anims.append(
@@ -390,6 +450,23 @@ def build_sfx(sounds):
     return clips
 
 
+def split_windows(cards):
+    """Times when a half-screen card is on screen."""
+    return [(float(c["start"]), float(c["start"]) + float(c["duration"]))
+            for c in (cards or [])
+            if c.get("style") != "band" and not c.get("full")]
+
+
+def full_windows(cards):
+    """Times a full-screen card owns the frame.
+
+    Captions are suppressed here rather than repositioned: the card is the
+    message, and two text blocks competing for one frame is worse than either
+    alone (rules/framing.md)."""
+    return [(float(c["start"]), float(c["start"]) + float(c["duration"]))
+            for c in (cards or []) if c.get("full")]
+
+
 def build_html(video_name, width, height, duration, chunks, profile, beats=None,
                sounds=None, cards=None, face_half_y=30.0):
     esc = html.escape
@@ -416,15 +493,22 @@ def build_html(video_name, width, height, duration, chunks, profile, beats=None,
     anims += proof_anims
     clips += build_sfx(sounds or [])
 
+    splits = split_windows(cards)
+    fulls = full_windows(cards)
     for i, c in enumerate(chunks):
         cid = f"cap{i}"
+        mid = (c["start"] + c["end"]) / 2
+        if any(a - 0.15 <= mid < b + 0.15 for a, b in fulls):
+            continue                      # the card speaks for this beat
+        in_split = any(a <= mid < b for a, b in splits)
+        cls = "caption split" if in_split else "caption"
         words = "".join(
             f'<span class="w{" em" if w["emphasis"] else ""}">{esc(w["text"])}</span>'
             for w in c["words"])
         clips.append(
             f'      <div id="{cid}" class="clip" data-start="{c["start"]:.2f}" '
             f'data-duration="{c["duration"]:.2f}" data-track-index="{TRACK_CAPTION}">\n'
-            f'        <div class="inner caption">{words}</div>\n'
+            f'        <div class="inner {cls}">{words}</div>\n'
             f'      </div>')
         t = c["start"]
         # Whole chunk lifts in; the emphasis word overshoots on top of it. The

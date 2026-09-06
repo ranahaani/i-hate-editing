@@ -63,7 +63,13 @@ doing nothing.
 
 ## Placement
 
-**Every layout change gets a sound.** A visual transition in silence reads as a
+**Every layout change gets a sound — including every card.** This is the
+floor, and it outranks the density ceiling below. More than half of one edit
+shipped with graphics arriving in silence because the ceiling was thinning
+them; a card that appears without a sound reads as unfinished. The ceiling
+governs optional accents only.
+
+ A visual transition in silence reads as a
 missing asset. Whoosh on the movement, pop on the element that lands.
 
 **Anything that pops off makes a sound.** A celebration, flash, or hero stat
@@ -90,6 +96,19 @@ budget on total moments, not permission to skip the mandatory ones — thin out
 optional accents first.
 
 ---
+
+## Under the voice
+
+**Duck the music, do not just set it low.** A static level has to sit so far
+down to stay clear of speech that nobody notices it. Sidechain it to the voice
+so it recovers in the gaps.
+
+**Dip further before the most important line.** Dropping the bed an extra few
+dB just ahead of the payoff makes it land, and costs nothing.
+
+**Layer a transition rather than reaching for one whoosh.** A low whoosh under
+a short metallic hit reads as designed; the same whoosh on every cut reads as a
+preset.
 
 ## The post-hook sting
 
