@@ -12,7 +12,8 @@ back work that still needs fixing by hand.*
 <p align="center">
   <em>One recording. Left is what came off the camera, right is what came back —
   and the terminal underneath is the run that produced it.
-  <a href="docs/demo.mp4">Full clip</a>.</em>
+  <a href="docs/demo.mp4">Full clip</a> ·
+  <a href="https://www.instagram.com/reel/Db3VN1Boyej/">the reel this footage came from</a>.</em>
 </p>
 
 Everything on the right was decided by the skill: which take to keep, that the
