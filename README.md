@@ -6,11 +6,11 @@ The name is the origin story. This started as a note to myself: *never hand
 back work that still needs fixing by hand.*
 
 <p align="center">
-  <img src="docs/demo.gif" alt="Five moments from one edit: raw take on the left, finished on the right" width="780">
+  <img src="docs/demo.gif" alt="Left: the raw take. Right: what the skill hands back." width="820">
 </p>
 
-<p align="center"><em>One edit, five moments. Left: what came off the camera.
-Right: what came back. <a href="docs/demo.mp4">Full clip</a>.</em></p>
+<p align="center"><em>Same recording, both phones. Left is what came off the
+camera; right is what came back. <a href="docs/demo.mp4">Full clip</a>.</em></p>
 
 ## What you get
 
