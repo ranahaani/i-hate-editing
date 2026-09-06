@@ -1,6 +1,6 @@
 # I Hate Editing
 
-[![skills.sh](https://skills.sh/b/ranahaani/i-hate-editing)](https://skills.sh/ranahaani/i-hate-editing)
+[![Install](https://img.shields.io/badge/skills.sh-npx%20skills%20add-111111)](https://github.com/ranahaani/i-hate-editing#option-a--skillssh)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Local](https://img.shields.io/badge/transcription-local%20whisper.cpp-brightgreen)](./install.md)
 [![No API key](https://img.shields.io/badge/cloud%20STT-not%20required-lightgrey)](./SECURITY.md)
