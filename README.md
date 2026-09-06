@@ -59,10 +59,30 @@ The model never watches the video. It reads a phrase-level transcript, decides
 the cut from speech boundaries and silence, and every mechanical step is a
 script it drives:
 
+```mermaid
+flowchart LR
+  subgraph setup["1 · Setup"]
+    A[scan] --> B[transcribe] --> C[pack]
+  end
+
+  subgraph cut["2 · Cut · gate"]
+    D[cut] --> E[verify] --> F[grade]
+  end
+
+  subgraph enrich["3 · Enrich"]
+    G[captions] --> H[capture proof] --> I[sound] --> J[compose] --> K[music]
+  end
+
+  subgraph ship["4 · Deliver"]
+    L[deliver] --> M[review]
+  end
+
+  setup --> cut --> enrich --> ship
 ```
-scan → transcribe → pack → cut → verify → grade → captions
-     → capture proof → sound → compose → music → deliver → review
-```
+
+`verify` is a hard gate on the cut; `review` is the human gate on the package.
+Captions, motion and sound all inherit timestamps from the approved cut — change
+the cut later and every downstream step is invalidated.
 
 Two things are worth calling out, because no other tool does them.
 
