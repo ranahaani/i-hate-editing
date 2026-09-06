@@ -2,8 +2,8 @@
 
 Read this once. Daily usage is in [`SKILL.md`](./SKILL.md).
 
-Prefer letting the agent do this — paste the **Quick start → Option A** prompt
-from the [`README`](./README.md). Or install the skill registration with:
+Prefer letting the agent do this — paste the **Quick start → Option B** prompt
+from the [`README`](./README.md). Or install the skill registration first:
 
 ```bash
 npx skills add ranahaani/i-hate-editing
