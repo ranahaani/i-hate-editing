@@ -261,6 +261,8 @@ def setup(report, footage_dir):
         accent = ask("Accent colour (hex)", default="#FFE300") or "#FFE300"
         font = ask("Display font", default="Archivo Black") or "Archivo Black"
 
+    sounds = (ask("Install the sound library? (~60 free-licensed effects) (y/n)",
+                  default="y") or "y").lower().startswith("y")
     gallery = (ask("Install the local review gallery? (y/n)", default="y") or "y").lower().startswith("y")
     growth = (ask("Install comment-to-DM automation? (y/n)", default="n") or "n").lower().startswith("y")
 
@@ -279,7 +281,8 @@ def setup(report, footage_dir):
         "pacing": style.split(" —")[0].lower(),
         "brand": {"accent": accent, "font": font, "caption_style": "big-keyword"},
         "transcription": {"model": model, "accel": report["accel"]},
-        "optional": {"review_gallery": gallery, "comment_to_dm": growth},
+        "optional": {"sound_library": sounds, "review_gallery": gallery,
+                     "comment_to_dm": growth},
     }
 
     studio = Path(footage_dir) / "studio"
@@ -305,6 +308,8 @@ def setup(report, footage_dir):
     else:
         print(f"  model    {model:<12} already cached")
     print(f"  scaffold {studio}")
+    if sounds:
+        print("  install  sound library   python3 scripts/sfx_library.py install")
     if gallery:
         print("  install  review gallery")
     if growth:

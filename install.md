@@ -75,31 +75,31 @@ Models are looked for in `~/.cache/whisper`,
 
 ## Sound library
 
-i-hate-editing places sounds from a library you point it at, organised by category:
-
-```
-sfx/
-├── whoosh/
-├── pop/
-├── impact/
-├── riser/
-└── notification/
-```
-
-Free, permissively licensed effects are available from
-[Mixkit](https://mixkit.co/free-sound-effects/). Check the licence of anything
-you add — audio scraped from aggregator sites generally cannot be redistributed
-or used commercially.
-
-Before using a new file, inspect it:
-
 ```bash
-python3 scripts/sound.py inspect sfx/riser/riser.mp3
+python3 scripts/sfx_library.py install
+python3 scripts/sfx_library.py status
 ```
 
-Many library files have their loud transient well after the file start. Played
-in a short window they are silent while every level check passes. `inspect`
-finds this and prints the fix.
+Installs roughly sixty effects into `~/.i-hate-editing/sfx`, organised by what
+each one is *for* rather than by what it sounds like — see
+`assets/sfx-taxonomy.json`. Placement reads that vocabulary, so a list row gets
+a click, a cut to a screen gets a glitch, and a full-frame card gets a deep
+whoosh, without anyone choosing files by hand.
+
+Sounds are fetched rather than bundled. Shipping audio inside the repository
+would redistribute it, and that is a licence question for every file; fetching
+records the licence per file instead. The default source is Mixkit, whose free
+licence permits commercial use without attribution.
+
+Every file is analysed on install. Roughly **40% of library effects have their
+loud moment well after the file starts** — played in a short window those are
+silent while every level check passes. The installer records where each peak
+sits so placement can start the file early enough to land it on the beat, and
+skips files whose peak is too late to be usable as a transient.
+
+To add your own, drop files into a category directory and re-run `status`.
+Check the licence of anything you add: an unlicensed effect in a monetised
+video is a real problem.
 
 ## First run
 

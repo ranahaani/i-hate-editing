@@ -1,0 +1,110 @@
+{
+  "_note": "The canonical sound vocabulary. Each entry says what the sound is FOR, so placement is a semantic decision rather than a guess. Volumes are peak targets in dBFS; see rules/sound.md for how they relate to the voice.",
+  "_license": "Fetched from Mixkit, whose free licence permits use in commercial video without attribution. Licence is recorded per file at fetch time. Never add audio whose licence you have not checked — an unlicensed effect in a monetised video is the user's problem, not yours.",
+
+  "groups": {
+    "visual": {
+      "title": "Visual enhancements and graphic elements",
+      "use": "Give weight to a digital object arriving on screen.",
+      "categories": {
+        "pop": {
+          "when": "A single emoji, sticker, icon or small element appears.",
+          "mixkit": "bubble", "peak_db": -13, "volume": 0.55, "track": 24
+        },
+        "whoosh_light": {
+          "when": "Fast text slide-in, a lower third, a shape animation.",
+          "mixkit": "whoosh", "peak_db": -12, "volume": 0.70, "track": 12
+        },
+        "keyboard": {
+          "when": "Text reveals letter-by-letter or word-by-word; a terminal types.",
+          "mixkit": "keyboard", "peak_db": -18, "volume": 0.32, "track": 30
+        },
+        "click": {
+          "when": "A list row lands, an item is ticked, something is selected or circled.",
+          "mixkit": "click", "peak_db": -15, "volume": 0.45, "track": 26
+        },
+        "shutter": {
+          "when": "A screenshot, photo or mock-up freezes on screen.",
+          "mixkit": "camera", "peak_db": -13, "volume": 0.55, "track": 27
+        },
+        "ding": {
+          "when": "A winning point, a tip, a key metric, a positive result.",
+          "mixkit": "bell", "peak_db": -13, "volume": 0.55, "track": 38
+        }
+      }
+    },
+
+    "transition": {
+      "title": "Scene transitions and camera movement",
+      "use": "Mask a cut, change topic, or match a camera move.",
+      "categories": {
+        "whoosh_deep": {
+          "when": "Whip pan, crash zoom, or moving from talking head to B-roll.",
+          "mixkit": "whoosh", "peak_db": -11, "volume": 0.75, "track": 13
+        },
+        "swoosh": {
+          "when": "A light slide between images. Softer than a deep whoosh.",
+          "mixkit": "swoosh", "peak_db": -14, "volume": 0.55, "track": 14
+        },
+        "glitch": {
+          "when": "Cutting to a screen, a retro filter, a flashback, an error.",
+          "mixkit": "glitch", "peak_db": -13, "volume": 0.55, "track": 28
+        },
+        "rewind": {
+          "when": "Stop the momentum: a mistake, a hard topic change.",
+          "mixkit": "rewind", "peak_db": -12, "volume": 0.60, "track": 29
+        }
+      }
+    },
+
+    "pacing": {
+      "title": "Psychological and pacing triggers",
+      "use": "Command attention or shift the viewer's state. Use sparingly.",
+      "categories": {
+        "impact": {
+          "when": "The hook lands, or a major realisation is stated.",
+          "mixkit": "impact", "peak_db": -10, "volume": 0.80, "track": 34
+        },
+        "riser": {
+          "when": "Building into a reveal or a punchline.",
+          "mixkit": "riser", "peak_db": -11, "volume": 0.85, "track": 36
+        },
+        "record_scratch": {
+          "when": "A sudden twist or interruption. At most once, ever.",
+          "mixkit": "scratch", "peak_db": -12, "volume": 0.60, "track": 31
+        },
+        "heartbeat": {
+          "when": "Tension immediately before a reveal or a result.",
+          "mixkit": "heartbeat", "peak_db": -18, "volume": 0.35, "track": 32
+        },
+        "clock": {
+          "when": "Urgency: a deadline, a limited offer, a countdown.",
+          "mixkit": "clock", "peak_db": -18, "volume": 0.35, "track": 33
+        },
+        "notification": {
+          "when": "The single biggest number or reveal in the piece. Once only.",
+          "mixkit": "notification", "peak_db": -12, "volume": 0.60, "track": 38
+        }
+      }
+    },
+
+    "texture": {
+      "title": "Ambient and textural beds",
+      "use": "Sit well under the voice for the whole time they play. These are beds, never punctuation.",
+      "categories": {
+        "paper": {
+          "when": "Deleting an idea, starting over, a document or scrapbook look.",
+          "mixkit": "paper", "peak_db": -22, "volume": 0.25, "track": 20
+        },
+        "crowd": {
+          "when": "Talking about being in public, an event, a business.",
+          "mixkit": "crowd", "peak_db": -26, "volume": 0.18, "track": 21
+        },
+        "hiss": {
+          "when": "Vintage or cosy grade over raw B-roll.",
+          "mixkit": "vinyl", "peak_db": -28, "volume": 0.15, "track": 22
+        }
+      }
+    }
+  }
+}
