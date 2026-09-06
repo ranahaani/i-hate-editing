@@ -560,7 +560,7 @@ def build_html(video_name, width, height, duration, chunks, profile, beats=None,
       // than estimated from character counts — glyph widths depend on the font
       // that actually resolves, and an estimate clips the text at both edges.
       // The zoom factor is included, since the headline is scaled during hold.
-      (function fitHeadlines() {{
+      function fitHeadlines() {{
         const ZOOM = {BIG_ZOOM};
         document.querySelectorAll(".card .big").forEach((el) => {{
           // clientWidth includes the card's horizontal padding, so measuring
@@ -579,7 +579,14 @@ def build_html(video_name, width, height, duration, chunks, profile, beats=None,
             guard++;
           }}
         }});
-      }})();
+      }}
+      // Measure AFTER the webfont resolves. Running immediately measures the
+      // narrower fallback face, under-shrinks, and the headline still touches
+      // the edges — the fourth time this defect has appeared.
+      fitHeadlines();
+      if (document.fonts && document.fonts.ready) {{
+        document.fonts.ready.then(fitHeadlines);
+      }}
 
       window.__timelines = window.__timelines || {{}};
       const tl = gsap.timeline({{ paused: true }});
