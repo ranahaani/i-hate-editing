@@ -132,6 +132,7 @@ python3 scripts/grade.py    cut.mp4 --strength normal   # look at the comparison
 python3 scripts/captions.py  --studio <studio>
 python3 scripts/proofread.py fix --studio <studio> --name "Claude" --name "<tool>"
 python3 scripts/capture.py  <url> --studio <studio> --find "<the phrase>"
+python3 scripts/icons.py fetch claude github --studio <studio>
 python3 scripts/sfx.py plan --studio <studio> --library <sfx>
 python3 scripts/compose.py  --studio <studio> --render
 ```
@@ -154,6 +155,12 @@ captions, and `beats.py` will fail step 10.
   {"start": 21.6, "duration": 1.9, "full": true, "big": "OWNS THE *FRAME*"}
 ]}
 ```
+
+Add `"icon": "claude.svg"` to put a brand mark on a card, and
+`"brand_colour": "#D97757"` to theme the whole card in that brand's colour —
+`icons.py` reports the official hex when it fetches. A named tool with its own
+mark on its own colour reads as designed; the same dark card every time reads
+as a template.
 
 `style: "band"` is the hook headline over a full frame. Default is a
 half-screen split: card on top, face below. `full: true` takes the whole frame

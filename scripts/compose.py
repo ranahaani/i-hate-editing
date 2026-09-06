@@ -160,6 +160,17 @@ def card_css(profile, width):
         box-shadow: 10px 10px 0 rgba(0,0,0,0.35);
       }}
       .card.full {{ height: 100%; justify-content: center; }}
+      .card .mark {{
+        width: {round(width * 0.115)}px; height: {round(width * 0.115)}px;
+        margin-bottom: {round(width * 0.026)}px;
+        display: block;
+      }}
+      .card.brand {{ background: var(--brand, #0d0d10); }}
+      /* The mark is tinted with the brand colour, which is invisible once the
+         card uses that colour as its ground. Force it white there. */
+      .card.brand .mark {{ filter: brightness(0) invert(1); }}
+      .card.brand .kicker {{ color: rgba(255,255,255,0.72); }}
+      .card.brand .big em {{ color: #fff; }}
       .card .rows {{
         display: flex; flex-direction: column; gap: {round(width * 0.016)}px;
         width: 100%; margin-top: {round(width * 0.026)}px;
@@ -190,7 +201,7 @@ def card_css(profile, width):
 """
 
 
-def build_cards(cards, width, height, face_half_y):
+def build_cards(cards, width, height, face_half_y, studio_dir="."):
     """Half-screen split: designed card on top, face below.
 
     The face is repositioned rather than scaled — scaling it while it is also
@@ -243,6 +254,15 @@ def build_cards(cards, width, height, face_half_y):
         size = int(min(width * 0.105, fitted))
 
         inner = ""
+        # A named tool gets its own mark, and optionally its own colour, so a
+        # brand beat reads as designed rather than as the same dark card again.
+        if c.get("icon"):
+            icon = Path(c["icon"])
+            if not icon.is_absolute():
+                icon = Path(studio_dir) / "assets" / "icons" / icon
+            if icon.is_file():
+                inner += (f'<img class="mark" src="{html.escape(icon.name)}" '
+                          f'alt="">')
         if c.get("kicker"):
             inner += f'<div class="kicker">{html.escape(c["kicker"])}</div>'
         inner += (f'<div class="big" id="{cid}big" '
@@ -261,10 +281,13 @@ def build_cards(cards, width, height, face_half_y):
             inner += f'<div class="sub">{html.escape(c["sub"])}</div>'
 
         full = " full" if c.get("full") else ""
+        brand = ""
+        if c.get("brand_colour"):
+            brand = f' brand" style="--brand:{html.escape(c["brand_colour"])}'
         clips.append(
             f'      <div id="{cid}" class="clip" data-start="{start:.2f}" '
             f'data-duration="{dur:.2f}" data-track-index="{TRACK_CARD + i}">\n'
-            f'        <div class="inner card{full}">{inner}</div>\n'
+            f'        <div class="inner card{full}{brand}">{inner}</div>\n'
             f'      </div>')
 
         if not c.get("full"):
@@ -480,7 +503,7 @@ def full_windows(cards):
 
 
 def build_html(video_name, width, height, duration, chunks, profile, beats=None,
-               sounds=None, cards=None, face_half_y=30.0):
+               sounds=None, cards=None, face_half_y=30.0, studio_dir="."):
     esc = html.escape
     clips, anims = [], []
 
@@ -496,7 +519,8 @@ def build_html(video_name, width, height, duration, chunks, profile, beats=None,
         f'             style="position:absolute;top:0;left:0;width:100%;height:100%;'
         f'object-fit:cover;"></video>')
 
-    card_clips, card_anims = build_cards(cards or [], width, height, face_half_y)
+    card_clips, card_anims = build_cards(cards or [], width, height, face_half_y,
+                                        studio_dir)
     clips += card_clips
     anims += card_anims
 
@@ -660,6 +684,13 @@ def main():
         f = Path(s_["file"])
         if f.is_file():
             shutil.copy2(f, comp / f.name)
+    for c in cards:
+        if c.get("icon"):
+            ic = Path(c["icon"])
+            if not ic.is_absolute():
+                ic = studio / "assets" / "icons" / ic
+            if ic.is_file():
+                shutil.copy2(ic, comp / ic.name)
 
     trailing = [c for c in chunks if c["end"] > duration + 0.05]
     if trailing:
@@ -670,7 +701,8 @@ def main():
 
     (comp / "index.html").write_text(
         build_html(video.name, width, height, duration, chunks, profile, beats,
-                   sounds, cards, float(profile.get("face_half_y", 30))))
+                   sounds, cards, float(profile.get("face_half_y", 30)),
+                   str(studio)))
 
     print(f"{len(chunks)} captions · {len(cards)} card(s) · {len(beats)} proof · "
           f"{len(sounds)} sound(s) over {duration:.1f}s · {width}x{height}")

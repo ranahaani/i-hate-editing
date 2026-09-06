@@ -67,6 +67,19 @@ the element is desktop-only, or point at something that is genuinely there.
 
 ---
 
+## Marks and icons
+
+A card naming a tool should carry that tool's mark, and a brand beat should use
+that brand's colour. `scripts/icons.py` fetches both — Simple Icons is public
+domain and ships each brand's official hex, so the card themes itself.
+
+Use the interface set for concepts with no brand — a clock for urgency, a moon
+for overnight — rather than writing the word.
+
+**An exact match or nothing.** Asking for "OpenAI" and silently getting
+"OpenAI Gym" puts the wrong company's mark on screen. The fetcher refuses
+near-matches and names the alternatives.
+
 ## The three moves
 
 **Scroll** — establish that the page is real and has substance. Keep it short;
