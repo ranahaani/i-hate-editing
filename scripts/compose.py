@@ -119,6 +119,7 @@ def proof_css(profile):
 def card_css(profile, width):
     accent = (profile.get("brand") or {}).get("accent", "#FFE300")
     font = (profile.get("brand") or {}).get("font", "Archivo Black")
+    band_y = float(profile.get("band_y", 58))
     return f"""
       .card {{
         position: absolute; top: 0; left: 0;
@@ -144,10 +145,12 @@ def card_css(profile, width):
         white-space: nowrap;
       }}
       .card .big em {{ color: {accent}; font-style: normal; }}
-      /* Just below the chin: clear of the platform header at the top and of
-         its caption and buttons at the bottom (rules/hooks.md). */
+      /* Below the chin by default: clear of the platform header at the top
+         and of its caption and buttons at the bottom (rules/hooks.md). Set
+         band_y in profile.yml when there is no platform UI to avoid, such as
+         a demo or a page embed. */
       .band {{
-        position: absolute; top: 58%; left: 5%;
+        position: absolute; top: {band_y}%; left: 5%;
         width: 90%;
         background: {accent};
         color: #0d0d10;
@@ -169,8 +172,36 @@ def card_css(profile, width):
       /* The mark is tinted with the brand colour, which is invisible once the
          card uses that colour as its ground. Force it white there. */
       .card.brand .mark {{ filter: brightness(0) invert(1); }}
-      .card.brand .kicker {{ color: rgba(255,255,255,0.72); }}
+      .card.brand .kicker {{ color: #fff; }}
+      .card.brand .sub {{ color: #fff; }}
       .card.brand .big em {{ color: #fff; }}
+      /* an animated terminal, for showing a command actually running */
+      .card .term {{
+        width: 100%; margin-top: {round(width * 0.022)}px;
+        background: #0a0d12; border: 1px solid #232935;
+        border-radius: {round(width * 0.014)}px; overflow: hidden; text-align: left;
+      }}
+      .card .term .tbar {{
+        height: {round(width * 0.040)}px; background: #171c24;
+        border-bottom: 1px solid #232935;
+        display: flex; align-items: center; gap: {round(width * 0.008)}px;
+        padding: 0 {round(width * 0.014)}px;
+      }}
+      .card .term .tdot {{
+        width: {round(width * 0.011)}px; height: {round(width * 0.011)}px;
+        border-radius: 50%;
+      }}
+      .card .term .tbody {{
+        padding: {round(width * 0.018)}px {round(width * 0.018)}px
+                 {round(width * 0.022)}px;
+        font-family: ui-monospace, monospace;
+        font-size: {round(width * 0.028)}px; line-height: 1.62;
+      }}
+      .card .term .tl {{ white-space: nowrap; }}
+      .card .term .tl .p {{ color: {accent}; margin-right: 0.5em; }}
+      .card .term .tl .c {{ color: #e8ecf2; }}
+      .card .term .tl .o {{ color: #9aa7ba; }}
+      .card .term .tl .k {{ color: #3ddc84; margin-right: 0.5em; }}
       .card .rows {{
         display: flex; flex-direction: column; gap: {round(width * 0.016)}px;
         width: 100%; margin-top: {round(width * 0.026)}px;
@@ -267,6 +298,23 @@ def build_cards(cards, width, height, face_half_y, studio_dir="."):
             inner += f'<div class="kicker">{html.escape(c["kicker"])}</div>'
         inner += (f'<div class="big" id="{cid}big" '
                   f'style="font-size:{size}px">{big}</div>')
+        if c.get("terminal"):
+            tl_rows = ""
+            for n, ln in enumerate(c["terminal"]):
+                if ln.startswith("$ "):
+                    body = (f'<span class="p">$</span>'
+                            f'<span class="c">{html.escape(ln[2:])}</span>')
+                elif ln.startswith("* "):
+                    body = (f'<span class="k">&#10003;</span>'
+                            f'<span class="o">{html.escape(ln[2:])}</span>')
+                else:
+                    body = f'<span class="o">{html.escape(ln)}</span>'
+                tl_rows += f'<div class="tl" id="{cid}t{n}">{body}</div>'
+            inner += (f'<div class="term"><div class="tbar">'
+                      f'<span class="tdot" style="background:#ff5f57"></span>'
+                      f'<span class="tdot" style="background:#febc2e"></span>'
+                      f'<span class="tdot" style="background:#28c840"></span>'
+                      f'</div><div class="tbody">{tl_rows}</div></div>')
         if c.get("items"):
             rows = "".join(
                 f'<div class="row" id="{cid}r{n}">'
@@ -321,6 +369,16 @@ def build_cards(cards, width, height, face_half_y, studio_dir="."):
             f'      tl.to("#{cid} .inner", {{ ...{leave}, duration: 0.22, '
             f'ease: "power3.in" }}, {end - 0.22:.2f});')
         anims.append(f'      tl.set("#{cid} .inner", {{ opacity: 0 }}, {end:.2f});')
+
+        # Terminal lines arrive in sequence, like a command actually running.
+        term = c.get("terminal") or []
+        if term:
+            span = max(0.22, (dur - 1.1) / max(1, len(term)))
+            for n in range(len(term)):
+                anims.append(
+                    f'      tl.from("#{cid}t{n}", {{ opacity: 0, x: -18, '
+                    f'duration: 0.20, ease: "power2.out" }}, '
+                    f'{start + 0.35 + n * span:.2f});')
 
         # List rows arrive one at a time, far enough apart to read as separate
         # events. A tight stagger reads as one block fading in, which defeats
