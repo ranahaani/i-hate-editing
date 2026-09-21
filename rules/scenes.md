@@ -50,6 +50,20 @@ Do not write components before that plan is agreed. A component written
 against an unapproved beat is thrown away, and it is the expensive artefact in
 this pipeline.
 
+## Start from a pattern that already works
+
+flick ships a catalog of scene templates —
+[`saved-animations`](https://github.com/Creatorberry/flick/tree/main/skills/flick/saved-animations) —
+each with the pattern it draws and what it is wrong for. Read that catalog
+before building: a template that matches the beat is a better starting point
+than a blank component, and adapting one means changing its content, palette
+and timing, never shipping its example copy or imagery.
+
+Two things always change when a flick template lands in a cut here: the
+palette comes from `profile.yml`, and the layout has to keep the caption band
+clear. A template built for a standalone 3.5s scene will also need retiming to
+the beat's frame count.
+
 ## One composition per scene
 
 Each scene is its own Remotion composition, registered on its own. Never build
