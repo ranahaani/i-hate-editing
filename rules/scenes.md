@@ -42,8 +42,9 @@ covers, what is on screen, and what moves in what order:
 
 `full: true` gives the scene the whole frame and steps the face away; without
 it the scene takes the top half and the face repositions below it, exactly
-like a half-card. Captions still draw on top, and are suppressed under a full
-scene the same way they are under a full card.
+like a half-card. Captions keep drawing on top either way — a full scene does
+*not* suppress them the way a full card does — so leave the bottom third of
+the frame clear or the caption lands on your artwork.
 
 Do not write components before that plan is agreed. A component written
 against an unapproved beat is thrown away, and it is the expensive artefact in
@@ -93,6 +94,7 @@ added at delivery.
 - [ ] The scene renders at the cut's own dimensions and frame rate.
 - [ ] Something changes at least every three seconds inside it.
 - [ ] Every on-screen word is readable on a phone at arm's length.
+- [ ] The bottom third is clear, where the caption lands.
 - [ ] Only assets the user supplied, or brand marks `icons.py` fetched.
 - [ ] The rendered MP4 has no audio stream.
 - [ ] You looked at first, middle and last frames of the render.
