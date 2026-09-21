@@ -105,6 +105,23 @@ variety alone — variety is the tiebreaker between equals, not the reason.
 card zooms as it arrives, the viewer sees two moves competing and reads
 neither.
 
+## Cards, scenes, and real material
+
+Three forms, in order of preference:
+
+1. **Real material.** A repo, a page, a dashboard, the actual number. Capture
+   it and move on it — `rules/proof.md`.
+2. **A designed scene.** A built visual with structure: a comparison, a
+   counter, a mechanism assembling in the order the sentence explains it.
+   Remotion components, one per beat — `rules/scenes.md`.
+3. **A card.** Text on a ground. The right form for a claim, a list or a
+   transition of topic, and the wrong form for anything with structure.
+
+A sentence with structure rendered as a headline and a sub-line is the most
+common way this pipeline produces something forgettable: nothing is wrong with
+the frame, it just does not show what was said. Ask what the sentence is
+*doing* before choosing the form.
+
 ## Cards are the fallback, not the goal
 
 Real material always beats a designed card. When the speaker names a repo, a

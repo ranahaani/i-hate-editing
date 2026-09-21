@@ -78,8 +78,29 @@ every one of them.
 **14. Never write into the skill directory.** All output belongs in
 `<footage>/studio/`.
 
+**15. A scene renders at the cut's dimensions and frame rate, or it judders.**
+An overlay at a different rate is resampled on composite — a frame dropped or
+doubled every few frames, on exactly the moves meant to look designed. A
+different size is rescaled. Both render without a warning. `scenes.py` takes
+both numbers from the cut for this reason; never set them in `Root.tsx`.
+
+**16. Scene audio never reaches the mix.** Overlays composite with the `muted`
+attribute, so a sting baked into a Remotion scene is dropped silently. It also
+escapes the voice-only differencing in rule 11, so it cannot be proven
+audible. Every sting belongs in `sfx.json`.
+
+**17. Frame-driven motion only inside a scene.** The renderer advances frames
+out of real time. A CSS transition, a timer or a `requestAnimationFrame` loop
+has no wall clock to run against, so it renders as a still — with no error and
+a plausible-looking first frame.
+
 ---
 
 Rules 1–7 and 10 are adapted from [browser-use/video-use](https://github.com/browser-use/video-use)
 (MIT), which isolated these production-correctness traps cleanly. Rules 8, 9,
 11, 12 and 13 come from failures observed in this project.
+
+Rules 15–17 govern the Remotion scene layer. Its structure — a spec
+approved before anything is built, one composition per scene, frame-driven
+motion — is adapted from [Creatorberry/flick](https://github.com/Creatorberry/flick)
+(MIT).
