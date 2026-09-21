@@ -53,7 +53,8 @@ Requirements, all free:
 |---|---|---|
 | Transcription | `whisper.cpp` | Local. Model chosen by language + hardware. |
 | Media processing | `ffmpeg` / `ffprobe` | |
-| Captions, cards, motion | HyperFrames | Renders HTML/CSS/GSAP compositions. |
+| Captions, cards, compositing | HyperFrames | Renders HTML/CSS/GSAP compositions. |
+| Designed scenes | Remotion | React motion graphics, one composition per scene. Installed per project by `scenes.py init`. |
 | Composition runtime | `node` 22+ | Already required by Claude Code. |
 | B-roll download | `yt-dlp` | Optional. |
 
@@ -73,6 +74,8 @@ Footage lives wherever the user put it. All output goes in `<footage>/studio/`.
     ├── takes.md             packed phrase-level transcript (reading view)
     ├── edl.json             cut decisions
     ├── composition/         HyperFrames project
+    ├── scenes.json           designed scenes: which beat, what moves
+    ├── scenes/               Remotion project for those scenes
     ├── assets/              fetched SFX, logos, screenshots
     ├── verify/              frames and measurements from the verify pass
     └── out/                 the delivered package
@@ -136,10 +139,14 @@ python3 scripts/proofread.py fix --studio <studio> --name "Claude" --name "<tool
 python3 scripts/capture.py  <url> --studio <studio> --find "<the phrase>"
 python3 scripts/icons.py fetch claude github --studio <studio>
 python3 scripts/sfx.py plan --studio <studio> --library <sfx>
+# Designed scenes for beats with structure — see "Designed scenes".
+python3 scripts/scenes.py init   --studio <studio>
+python3 scripts/scenes.py check  --studio <studio>
+python3 scripts/scenes.py render --studio <studio>
 python3 scripts/compose.py  --studio <studio> --render
 ```
 
-You author three files by hand, the same way you author the EDL. They are the
+You author four files by hand, the same way you author the EDL. They are the
 edit; the scripts only render them.
 
 **`cards.json`** — the motion vocabulary. Without it the piece is a face with
@@ -190,6 +197,32 @@ false, because captions are the most-read thing on screen.
 
 `asset` is the `--name` you gave `capture.py`. `target` must be text that
 capture found. `rules/proof.md` has the craft.
+
+**`scenes.json`** — designed scenes, built in Remotion. A card is text on a
+ground; a scene is a built visual with structure — a counter running, a
+comparison assembling, a stylised UI typing. Beats with structure go here
+rather than into a headline and a sub-line.
+
+```json
+{"scenes": [
+  {"id": "token-waste", "start": 12.4, "duration": 3.2, "full": true,
+   "line": "every retry re-sends the whole conversation",
+   "visual": "context bar fills, three retry chips stack on it, bar turns red on the third",
+   "assets": ["claude.svg"]}
+]}
+```
+
+`scenes.py sync` writes the Remotion project's `Root.tsx` and
+`src/data/scene-spec.json` from this file and the cut — one composition per
+scene, at the cut's own size and frame rate. You write only the components, in
+`<studio>/scenes/src/scenes/<Component>.tsx`. `scenes.py studio` opens Remotion
+Studio to preview them, `render` writes one MP4 per scene and registers them as
+overlays so `compose.py` composites them under the captions.
+
+Show `scenes.json` before writing any component — a component written against
+an unapproved beat is the expensive artefact to throw away. Craft and the
+self-review checklist: `rules/scenes.md`. Scene stings go in `sfx.json`, never
+inside the component: overlays composite muted (`HARD-RULES.md`).
 
 **`profile.yml`** — written by `scan.py`, or by hand when it cannot run
 interactively:
@@ -290,6 +323,7 @@ the failure it prevents.
 | `rules/sound.md` | Sound effect placement, levels, music |
 | `rules/proof.md` | Screenshots, B-roll, zoom and highlight |
 | `rules/motion.md` | Zooms, transitions, cards, layout |
+| `rules/scenes.md` | Designed Remotion scenes: when, how, what to check |
 | `rules/framing.md` | Crops, splits, composition |
 
 ## Anti-patterns
@@ -301,5 +335,8 @@ the failure it prevents.
 - Re-transcribing a source that has not changed.
 - Auto-detecting the spoken language.
 - Presenting output you did not look at.
+- Rendering a sentence with structure as a headline and a sub-line.
+- Writing a scene component before `scenes.json` was agreed.
+- Baking a sound effect into a scene, where the mix never hears it.
 - Adding a feature nobody asked for.
 - Finishing an edit without recording what the user corrected.

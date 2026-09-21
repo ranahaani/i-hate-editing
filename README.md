@@ -36,6 +36,8 @@ card, and where every sound lands. You say "punchier." It owns the numbers.
   line you said (no mocked screenshots)
 - Places free-licensed SFX by intent and aligns peaks so a short window is
   actually audible
+- Builds beats with structure as real motion graphics — Remotion components,
+  previewed in Studio, composited under the captions
 - Hands back a package: master, platform crops, ranked thumbnails, post lines
 - Remembers corrections in `taste.md` so the tenth video is better than the first
 - Runs transcription on your machine with `whisper.cpp`. No cloud STT key.
@@ -292,7 +294,8 @@ uv venv .venv && uv pip install --python .venv pytest
 ## Disclaimers
 
 Footage stays on your machine. Scripts can still hit the network for proof
-pages, Mixkit SFX, and a pinned HyperFrames package. See
+pages, Mixkit SFX, a pinned HyperFrames package, and Remotion when a project
+uses designed scenes. See
 [`SECURITY.md`](./SECURITY.md).
 
 Copyright on `yt-dlp` downloads and music beds is on you. Brand marks from
@@ -306,5 +309,11 @@ trust. No auth on that server.
 Composition and rendering by
 [HyperFrames](https://github.com/heygen-com/hyperframes) (version pinned in
 `scripts/compose.py`).
+
+Designed scenes are [Remotion](https://www.remotion.dev) compositions. That
+layer's shape — a spec approved before anything is built, one composition per
+scene, frame-driven motion, no background music — is adapted from
+[Creatorberry's flick](https://github.com/Creatorberry/flick) (MIT), which does
+the same job standalone and is worth using directly if a script is all you have.
 
 MIT. Vulnerabilities: [`SECURITY.md`](./SECURITY.md).
