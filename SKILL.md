@@ -138,6 +138,11 @@ python3 scripts/captions.py  --studio <studio>
 python3 scripts/proofread.py fix --studio <studio> --name "Claude" --name "<tool>"
 python3 scripts/capture.py  <url> --studio <studio> --find "<the phrase>"
 python3 scripts/icons.py fetch claude github --studio <studio>
+# Generated stills for beats with nothing real to show — see "Generated stills".
+python3 scripts/gen_image.py "<full prompt>" --studio <studio> --name payoff --animate 3
+# Optional: 2–3 AI B-roll clips (3s each) — writes studio/broll.json + assets/broll/
+# Author studio/slots.json from takes.md beats first; see broll-gen skill.
+~/.claude/skills/broll-gen/scripts/broll-gen generate --studio <studio> --slots <studio>/slots.json --duration 3
 python3 scripts/sfx.py plan --studio <studio> --library <sfx>
 # Designed scenes for beats with structure — see "Designed scenes".
 python3 scripts/scenes.py init   --studio <studio>
@@ -145,6 +150,43 @@ python3 scripts/scenes.py check  --studio <studio>
 python3 scripts/scenes.py render --studio <studio>
 python3 scripts/compose.py  --studio <studio> --render
 ```
+
+### Generated stills
+
+`scripts/gen_image.py` talks to a local Gemini proxy
+(`http://127.0.0.1:8081/v1`, key `sk-gemini`) — no account, no cost, no
+watermark. Image generation there is a **route, not a model**: nothing in
+`/v1/models` makes images, `n` must be 1, and `size`/`quality`/`style` are
+rejected, so the aspect goes in the prompt text. The script injects the
+vertical-9:16 clause for you and warns if what comes back is landscape. It
+injects nothing else — when a beat needs text, logos, screens or UI kept out,
+put that ban at the end of that beat's own prompt.
+
+**Reach for it only after checking there is nothing real to show.** A repo, a
+page, a dashboard always beats a generated still — see `rules/proof.md`. And a
+generated image must never imply a screenshot of something real.
+
+**Write the whole prompt.** A short prompt returns a stock-photo cliché. Every
+prompt states, in this order: the subject, the setting, the camera (lens,
+aperture, height), the lighting with its direction and colour temperature, the
+composition including which parts of the frame stay empty, the mood, and the
+ban list. `--animate N` renders a push-in clip from the still, because a
+generated still that sits motionless is a dead frame; add the clip to
+`broll.json` as an overlay.
+
+Worked prompt, for the "gold mine" payoff beat of a reel about saving money:
+
+> A deep underground cavern of glowing golden light, with streams of tiny
+> luminous golden particles rising out of the darkness like sparks. Rich black
+> background, warm gold highlights, high contrast, dramatic rim lighting,
+> shot on a 35mm lens at f2, abstract and atmospheric, the lower third almost
+> pure black so captions stay readable. Cinematic, fine film grain.
+
+Full prompt library and failure log: `~/ai-me/reels/docs/agent-suggestions.md`
+and `~/.claude/skills/virtual-bg/references/plate-prompts.md`.
+
+**Do not generate a virtual background.** Reels ship with the real room — see
+`taste.md` under framing, and the STOP notice in the `virtual-bg` skill.
 
 You author four files by hand, the same way you author the EDL. They are the
 edit; the scripts only render them.
