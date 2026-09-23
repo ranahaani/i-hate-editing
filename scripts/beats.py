@@ -14,6 +14,7 @@ Counts every visible event across the composition and reports the gaps.
 
 import argparse
 import json
+import pathlib
 import re
 import sys
 from pathlib import Path
@@ -22,6 +23,12 @@ DEFAULT_MAX_GAP = 3.0
 # rules/motion.md: a beat longer than about four seconds needs another event
 # inside it. Below that a single held element still reads as alive.
 PACING_GAP = {"punchy": 4.0, "balanced": 5.0, "restrained": 6.5}
+
+# How long anything placed on screen must stay there. Under the floor the
+# viewer registers a flicker and reads nothing; over the ceiling the shot
+# stops being a beat and becomes a hold. Applies to cards, panels, cutaways
+# and proof shots alike — see rules/motion.md.
+DWELL_MIN, DWELL_MAX = 1.5, 3.0
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from transcribe import read_profile  # noqa: E402
@@ -56,6 +63,7 @@ def main():
     max_gap = args.max_gap or PACING_GAP.get(pacing, DEFAULT_MAX_GAP)
 
     events = []
+    dwell = []   # (label, kind, start, duration) for the dwell-time gate
     for s in tl.get("segments", []):
         if s["out_start"] > 0.01:
             events.append((s["out_start"], "cut", s.get("beat") or "segment"))
@@ -64,13 +72,24 @@ def main():
         label = c.get("big", "").replace("*", "")[:28]
         start, dur = float(c["start"]), float(c["duration"])
         events.append((start, kind, label))
+        dwell.append((label or kind, kind, start, dur))
         # The headline's held zoom is real motion inside the card, so it counts
         # as an event — ignoring it reports dead time where the screen moves.
         if kind == "card" and dur > 1.2:
             events.append((start + 0.45, "zoom", f"{label} held zoom"))
+    # B-roll is a shot change like any other. Leaving it out reported dead
+    # time over a full-frame cutaway and, worse, would hide a real gap.
+    for o in load(studio / "broll.json", "overlays"):
+        kind = "broll" if o.get("full") else "panel"
+        name = pathlib.Path(o["file"]).stem
+        events.append((float(o["start"]), kind, name))
+        dwell.append((name, kind, float(o["start"]),
+                      float(o["end"]) - float(o["start"])))
     for b in load(studio / "proof.json", "beats"):
-        events.append((float(b["start"]), "proof",
-                       f"{b.get('action')} {b.get('target') or ''}".strip()))
+        label = f"{b.get('action')} {b.get('target') or ''}".strip()
+        events.append((float(b["start"]), "proof", label))
+        dwell.append((label[:28] or b.get("asset", "proof"), "proof",
+                      float(b["start"]), float(b.get("duration", 0))))
 
     # --- gate: the frame must be disrupted inside the first two seconds
     opening = [e for e in events if e[0] <= 2.0]
@@ -138,6 +157,23 @@ def main():
             "captions look unproofread — " + "; ".join(raw_caption_flags) +
             ". Machine translation is a draft, not caption copy; rewrite it and "
             "set proofread: true (rules/captions.md)")
+    short = [d for d in dwell if d[3] < DWELL_MIN - 0.01]
+    long_ = [d for d in dwell if d[3] > DWELL_MAX + 0.01]
+    if short:
+        failures.append(
+            "on screen for less than %.1fs — too fast to read, nobody registers "
+            "it:\n        " % DWELL_MIN +
+            "\n        ".join(f"{k} {n!r} {t:.2f}s for {d:.2f}s"
+                               for n, k, t, d in short) +
+            "\n        Give each at least %.1fs (rules/motion.md)" % DWELL_MIN)
+    if long_:
+        failures.append(
+            "on screen for more than %.1fs — stops being a beat and becomes a "
+            "hold:\n        " % DWELL_MAX +
+            "\n        ".join(f"{k} {n!r} {t:.2f}s for {d:.2f}s"
+                               for n, k, t, d in long_) +
+            "\n        Cut back to the face or change the layout "
+            "(rules/motion.md)")
     if named and not proof_count:
         failures.append(
             f"the piece names something real ({', '.join(sorted(set(named))[:3])}) "

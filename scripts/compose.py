@@ -27,9 +27,10 @@ from transcribe import read_profile  # noqa: E402
 # or attenuates audio on high track indices without raising an error, so a
 # sting placed up here plays silently in the render.
 TRACK_VIDEO = 1
+TRACK_PANEL = 2
 BIG_ZOOM = 1.18          # held zoom on a card headline
 TRACK_CARD = 15
-TRACK_PROOF = 20
+TRACK_PROOF = 45
 TRACK_CAPTION = 60
 AUDIO_TRACK_CEILING = 40
 
@@ -41,7 +42,7 @@ HYPERFRAMES_JSON = {
     "registry": "https://raw.githubusercontent.com/heygen-com/hyperframes/main/registry",
     "paths": {"blocks": "compositions", "components": "compositions/components",
               "assets": "assets"},
-    "media": {"autoProxy": True},
+    "media": {"autoProxy": False},
 }
 
 PACKAGE_JSON = {
@@ -55,6 +56,10 @@ PACKAGE_JSON = {
 
 
 def caption_css(profile, width):
+    # Split-mode caption height is per-recording: it depends on where his chest
+    # and collar land inside the bottom half, so it is read from profile.yml
+    # (caption_split_bottom) rather than fixed. 52 keeps the old behaviour.
+    split_bottom = float(profile.get("caption_split_bottom", 52))
     accent = (profile.get("brand") or {}).get("accent", "#FFE300")
     # Named fallbacks like Impact are not in the renderer's auto-resolved font
     # list, so they fail the font_family_without_font_face check and would
@@ -82,7 +87,7 @@ def caption_css(profile, width):
       /* During a half-split the face occupies the bottom half, so a caption in
          its usual place lands on the speaker's eyes. It moves into the card's
          empty lower region instead (rules/framing.md). */
-      .caption.split {{ bottom: 52%; }}
+      .caption.split {{ bottom: {split_bottom:.0f}%; }}
       .caption .w {{
         display: inline-block;
         margin: 0 0.12em;
@@ -116,23 +121,60 @@ def proof_css(profile):
         border-radius: 3px;
         transform-origin: 0 50%;
       }}
+      /* multiply over a near-black page multiplies to black: the marker is
+         drawn and is simply invisible. On dark captures screen it instead, so
+         the bar lights up and light text stays light. Set
+         "highlight_style": "dark" on the beat. */
+      .hl.dark {{
+        mix-blend-mode: screen;
+        opacity: 0.55;
+      }}
 """
+
+
+def is_light(colour):
+    """Relative luminance of a #rgb / #rrggbb ground, thresholded for type."""
+    h = colour.strip().lstrip("#")
+    if len(h) == 3:
+        h = "".join(ch * 2 for ch in h)
+    if len(h) != 6:
+        return False
+    r, g, b = (int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
+    lin = [(c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4)
+           for c in (r, g, b)]
+    return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2] > 0.35
 
 
 def card_css(profile, width):
     accent = (profile.get("brand") or {}).get("accent", "#FFE300")
     font = (profile.get("brand") or {}).get("font", "Archivo Black")
     band_y = float(profile.get("band_y", 58))
+    split_top = max(30.0, min(55.0, float(profile.get("split_top", 50))))
     return f"""
       .card {{
         position: absolute; top: 0; left: 0;
-        width: 100%; height: 50%;
+        width: 100%; height: {split_top:.1f}%;
         background: #0d0d10;
         display: flex; flex-direction: column;
         align-items: center; justify-content: center;
         padding: 0 {round(width * 0.075)}px;
         font-family: "{font}", sans-serif;
         text-align: center;
+      }}
+      .card.logo {{
+        top: 3%; left: 22%; width: 56%; height: auto;
+        min-height: 0;
+        border-radius: {round(width * 0.022)}px;
+        padding: {round(width * 0.028)}px {round(width * 0.030)}px
+                 {round(width * 0.026)}px;
+        box-shadow: 0 14px 28px rgba(0,0,0,0.45);
+      }}
+      .card.logo .mark {{
+        width: {round(width * 0.10)}px; height: {round(width * 0.10)}px;
+        margin-bottom: {round(width * 0.012)}px;
+      }}
+      .card.logo .big {{
+        font-size: {round(width * 0.062)}px !important;
       }}
       .card .kicker {{
         font-size: {round(width * 0.032)}px;
@@ -166,18 +208,57 @@ def card_css(profile, width):
         box-shadow: 10px 10px 0 rgba(0,0,0,0.35);
       }}
       .card.full {{ height: 100%; justify-content: center; }}
+      /* A row of named brands, each revealed on the word that names it.
+         Three half-screen takeovers 0.5s apart read as a glitch; one card
+         that fills up reads as a designed beat. */
+      .card .logorow {{
+        display: flex; flex-direction: row; align-items: flex-end;
+        justify-content: center; gap: {round(width * 0.075)}px;
+        margin-top: {round(width * 0.030)}px;
+      }}
+      .card .logorow .lg {{
+        display: flex; flex-direction: column; align-items: center;
+        gap: {round(width * 0.018)}px;
+      }}
+      .card .logorow .lg img {{
+        width: {round(width * 0.155)}px; height: {round(width * 0.155)}px;
+        object-fit: contain; display: block; filter: none;
+      }}
+      .card .logorow .lg span {{
+        font-size: {round(width * 0.040)}px;
+        letter-spacing: 0.04em; color: {accent};
+        font-family: "{font}", sans-serif;
+      }}
       .card .mark {{
         width: {round(width * 0.115)}px; height: {round(width * 0.115)}px;
         margin-bottom: {round(width * 0.026)}px;
         display: block;
       }}
       .card.brand {{ background: var(--brand, #0d0d10); }}
-      /* The mark is tinted with the brand colour, which is invisible once the
-         card uses that colour as its ground. Force it white there. */
+      /* Dark brand grounds (black / near-black): yellow type + white mark.
+         Coloured brand grounds keep inverted white type. */
       .card.brand .mark {{ filter: brightness(0) invert(1); }}
       .card.brand .kicker {{ color: #fff; }}
       .card.brand .sub {{ color: #fff; }}
       .card.brand .big em {{ color: #fff; }}
+      .card.brand.lit .kicker,
+      .card.brand.lit .big,
+      .card.brand.lit .big em,
+      .card.brand.lit .sub,
+      .card.brand.lit .row .t {{ color: #0d0d10; }}
+      .card.brand.lit .row .n {{ color: rgba(13, 13, 16, 0.55); }}
+      .card.brand.lit .mark {{ filter: none; }}
+      .card.brand.ink {{ background: #0d0d10; }}
+      .card.brand.ink .kicker {{ color: {accent}; }}
+      .card.brand.ink .big {{ color: {accent}; }}
+      .card.brand.ink .big em {{ color: {accent}; }}
+      .card.brand.ink .sub {{ color: rgba(255, 227, 0, 0.78); }}
+      .card.brand.ink .mark {{ filter: none; }}
+      .card.brand.ink .row {{
+        background: #1a1a1f; color: {accent};
+      }}
+      .card.brand.ink .row .n {{ color: rgba(255, 227, 0, 0.55); }}
+      .card.brand.ink .row .d {{ color: rgba(255, 227, 0, 0.55); }}
       /* an animated terminal, for showing a command actually running */
       .card .term {{
         width: 100%; margin-top: {round(width * 0.022)}px;
@@ -235,7 +316,8 @@ def card_css(profile, width):
 """
 
 
-def build_cards(cards, width, height, face_half_y, studio_dir="."):
+def build_cards(cards, width, height, face_half_y, studio_dir=".",
+                split_top=50.0):
     """Half-screen split: designed card on top, face below.
 
     The face is repositioned rather than scaled — scaling it while it is also
@@ -244,8 +326,10 @@ def build_cards(cards, width, height, face_half_y, studio_dir="."):
     clips, anims = [], []
     card_index = 0
     prev_card_end = None
+    top_pct = max(30.0, min(55.0, float(split_top)))
+    face_pct = 100.0 - top_pct
     FULL = 'top: "0px", height: "100%", objectPosition: "50% 50%"'
-    HALF = (f'top: "50%", height: "50%", '
+    HALF = (f'top: "{top_pct:.1f}%", height: "{face_pct:.1f}%", '
             f'objectPosition: "50% {face_half_y:.0f}%"')
 
     for i, c in enumerate(cards):
@@ -286,6 +370,8 @@ def build_cards(cards, width, height, face_half_y, studio_dir="."):
         # clips once the zoom lands.
         fitted = avail / max(1, len(plain) * 0.62 * BIG_ZOOM)
         size = int(min(width * 0.105, fitted))
+        if c.get("style") == "logo":
+            size = int(min(width * 0.070, fitted * 0.75))
 
         inner = ""
         # A named tool gets its own mark, and optionally its own colour, so a
@@ -328,20 +414,40 @@ def build_cards(cards, width, height, face_half_y, studio_dir="."):
                 + "</div>"
                 for n, it in enumerate(c["items"]))
             inner += f'<div class="rows">{rows}</div>'
+        if c.get("logos"):
+            cells = "".join(
+                f'<div class="lg" id="{cid}g{n}">'
+                f'<img src="{html.escape(Path(g["icon"]).name)}" alt="">'
+                f'<span>{html.escape(g.get("label", ""))}</span></div>'
+                for n, g in enumerate(c["logos"]))
+            inner += f'<div class="logorow">{cells}</div>'
         if c.get("sub"):
             inner += f'<div class="sub">{html.escape(c["sub"])}</div>'
 
         full = " full" if c.get("full") else ""
+        logo = " logo" if c.get("style") == "logo" else ""
         brand = ""
+        ink = ""
         if c.get("brand_colour"):
             brand = f' brand" style="--brand:{html.escape(c["brand_colour"])}'
+            # Near-black grounds use the ink (yellow-on-black) treatment.
+            bc = c["brand_colour"].strip().lower()
+            if bc in {"#000", "#000000", "#0d0d10", "#0d0d0f", "#101014", "#111"}:
+                ink = " ink"
+            elif is_light(bc):
+                # White type on a light ground fails the contrast gate, and a
+                # yellow CTA plate is exactly where a reader is asked to act.
+                ink = " lit"
         clips.append(
             f'      <div id="{cid}" class="clip" data-start="{start:.2f}" '
             f'data-duration="{dur:.2f}" data-track-index="{TRACK_CARD + i}">\n'
-            f'        <div class="inner card{full}{brand}">{inner}</div>\n'
+            f'        <div class="inner card{full}{logo}{ink}{brand}">{inner}</div>\n'
             f'      </div>')
 
-        if not c.get("full"):
+        if c.get("style") == "logo":
+            # Face stays full-frame; card is a floating ink plate over the top.
+            pass
+        elif not c.get("full"):
             anims.append(f'      tl.set("#face", {{ {HALF} }}, {start:.2f});')
             anims.append(f'      tl.set("#face", {{ {FULL} }}, {end:.2f});')
 
@@ -354,6 +460,11 @@ def build_cards(cards, width, height, face_half_y, studio_dir="."):
             # A payoff owns the frame. No animation is the strongest arrival
             # when the moment earns it; the impact carries the transition.
             enter, leave, dur_in = "{ opacity: 0 }", "{ opacity: 0 }", 0.04
+        elif c.get("style") == "logo":
+            # Logo accents scale-pop; face stays full-frame underneath.
+            enter = "{ opacity: 0, scale: 0.55 }"
+            leave = "{ opacity: 0, scale: 0.85 }"
+            dur_in = 0.22
         elif follows_card:
             # One card pushing the last out reads as a sequence.
             side = 110 if (card_index % 2 == 0) else -110
@@ -387,8 +498,12 @@ def build_cards(cards, width, height, face_half_y, studio_dir="."):
         # events. A tight stagger reads as one block fading in, which defeats
         # the point of a list (rules/motion.md).
         ROW_GAP = 0.30
-        for n in range(len(c.get("items") or [])):
-            at = start + 0.40 + n * ROW_GAP
+        for n, _it in enumerate(c.get("items") or []):
+            # A row may name the moment it belongs to; a claim that lands
+            # before it is spoken is the same defect as an early cutaway.
+            at = (max(start, min(float(_it["at"]), end - 0.2))
+                  if isinstance(_it, dict) and _it.get("at") is not None
+                  else start + 0.40 + n * ROW_GAP)
             anims.append(
                 f'      tl.from("#{cid}r{n}", {{ opacity: 0, x: -46, '
                 f'duration: 0.34, ease: "back.out(1.5)" }}, {at:.2f});')
@@ -396,24 +511,47 @@ def build_cards(cards, width, height, face_half_y, studio_dir="."):
             anims.append(
                 f'      tl.from("#{cid}r{n} .n", {{ opacity: 0, scale: 0.4, '
                 f'duration: 0.26, ease: "back.out(2.6)" }}, {at + 0.10:.2f});')
+        # Each brand lands on the word that names it, not on the card's
+        # own entrance — the card is just the stage they arrive on.
+        for n, g in enumerate(c.get("logos") or []):
+            at = max(start, min(float(g.get("at", start)), end - 0.15))
+            anims.append(f'      tl.set("#{cid}g{n}", {{ opacity: 0 }}, {start:.2f});')
+            anims.append(
+                f'      tl.to("#{cid}g{n}", {{ opacity: 1, duration: 0.01 }}, '
+                f'{at:.2f});')
+            anims.append(
+                f'      tl.from("#{cid}g{n}", {{ scale: 0.4, yPercent: 18, '
+                f'duration: 0.30, ease: "back.out(2.4)" }}, {at:.2f});')
         # A held zoom on the key word, err large (rules/motion.md).
-        hold_at = start + 0.45
-        anims.append(
-            f'      tl.to("#{cid}big", {{ scale: 1.18, duration: 0.28, '
-            f'ease: "power2.out" }}, {hold_at:.2f});')
-        anims.append(
-            f'      tl.to("#{cid}big", {{ scale: 1.0, duration: 0.30, '
-            f'ease: "power2.inOut" }}, {min(hold_at + 1.5, end - 0.3):.2f});')
+        # Logo pops are too short for a hold zoom — it fights the leave tween.
+        if c.get("style") != "logo":
+            hold_at = start + 0.45
+            anims.append(
+                f'      tl.to("#{cid}big", {{ scale: 1.18, duration: 0.28, '
+                f'ease: "power2.out" }}, {hold_at:.2f});')
+            anims.append(
+                f'      tl.to("#{cid}big", {{ scale: 1.0, duration: 0.30, '
+                f'ease: "power2.inOut" }}, {min(hold_at + 1.5, end - 0.3):.2f});')
     return clips, anims
 
 
-def build_proof(beats, width, height):
+def build_proof(beats, width, frame_h, face_half_y=30.0, split_top=50.0):
     """Scroll / zoom / highlight over a captured page image.
 
     The page is one tall still, so every move is authored here rather than
     baked into a recording: it can be re-timed when the cut changes and can
-    slow down on the line that matters."""
+    slow down on the line that matters.
+
+    A beat marked `"split": true` keeps the speaker in the bottom half instead
+    of taking the whole frame — the way a screen-share reads on camera. Over a
+    long product section that is the difference between a cutaway and the face
+    being gone for fifteen seconds."""
     clips, anims = [], []
+    top_pct = max(30.0, min(55.0, float(split_top)))
+    face_pct = 100.0 - top_pct
+    FULL = 'top: "0px", height: "100%", objectPosition: "50% 50%"'
+    HALF = (f'top: "{top_pct:.1f}%", height: "{face_pct:.1f}%", '
+            f'objectPosition: "50% {face_half_y:.0f}%"')
     for i, b in enumerate(beats):
         meta = json.loads(Path(b["meta"]).read_text())
         img = meta["image"]
@@ -421,6 +559,9 @@ def build_proof(beats, width, height):
         img_w, img_h = meta["image_size"]
         fit = width / img_w                      # image is displayed at frame width
         shown_h = img_h * fit                    # displayed height of the whole page
+        split = bool(b.get("split"))
+        # Every placement below is relative to the window the page lives in.
+        height = frame_h * (top_pct / 100) if split else frame_h
 
         def px(css_v):
             return css_v * dpr * fit
@@ -429,12 +570,17 @@ def build_proof(beats, width, height):
             """Keep the image covering the frame horizontally."""
             return max(min(x, 0.0), min(0.0, width - width))  # image is frame-wide
 
-        def clamp_pan(y):
-            """Keep the image covering the frame.
+        def rest_y(sc=1.0):
+            """Vertical rest position for a page shorter than the frame.
 
-            Centring a target near the top or bottom of the page otherwise
-            leaves a black band where there is no image, which reads as a
-            broken shot."""
+            A short capture pinned to the top reads as a broken shot; centred
+            with even margins it reads as a screen held up to camera."""
+            return max(0.0, (height - shown_h * sc) / 2)
+
+        def clamp_pan(y):
+            """Keep the image covering the frame."""
+            if shown_h <= height:
+                return rest_y()
             return max(min(y, 0.0), min(0.0, height - shown_h))
 
         start, dur = float(b["start"]), float(b["duration"])
@@ -454,20 +600,30 @@ def build_proof(beats, width, height):
             cx, cy = width / 2, px(float(b.get("from_y", 0))) + height / 2
 
         hl = ""
-        if tgt and b.get("highlight"):
-            hl = (f'<div class="hl" id="{bid}hl" style="left:{px(tgt["x"]) - 6:.0f}px;'
-                  f'top:{px(tgt["y"]) - 4:.0f}px;height:{px(tgt["h"]) + 8:.0f}px;'
-                  f'width:{px(tgt["w"]) + 12:.0f}px;"></div>')
+        # A wrapped headline is one element, so its box spans every line and a
+        # marker over it reads as a slab rather than a stroke. "highlight_rect"
+        # (css x/y/w/h) puts the marker on the one line that carries the claim.
+        rect = b.get("highlight_rect")
+        if b.get("highlight") and (rect or tgt):
+            box = rect or {k: tgt[k] for k in ("x", "y", "w", "h")}
+            hl_cls = "hl dark" if b.get("highlight_style") == "dark" else "hl"
+            hl = (f'<div class="{hl_cls}" id="{bid}hl" style="left:{px(box["x"]) - 6:.0f}px;'
+                  f'top:{px(box["y"]) - 4:.0f}px;height:{px(box["h"]) + 8:.0f}px;'
+                  f'width:{px(box["w"]) + 12:.0f}px;"></div>')
 
+        win = (f' style="height:{top_pct:.1f}%"' if split else "")
         clips.append(
             f'      <div id="{bid}" class="clip" data-start="{start:.2f}" '
             f'data-duration="{dur:.2f}" data-track-index="{TRACK_PROOF + i}">\n'
-            f'        <div class="inner proofwin">\n'
+            f'        <div class="inner proofwin"{win}>\n'
             f'          <div class="proofpan" id="{bid}pan">'
             f'<img src="{html.escape(Path(img).name)}" alt="">{hl}</div>\n'
             f'        </div>\n'
             f'      </div>')
 
+        if split:
+            anims.append(f'      tl.set("#face", {{ {HALF} }}, {start:.2f});')
+            anims.append(f'      tl.set("#face", {{ {FULL} }}, {end:.2f});')
         # Cutaway: the proof owns the frame, then hands it back.
         anims.append(f'      tl.fromTo("#{bid} .inner", {{ yPercent: -100 }}, '
                      f'{{ yPercent: 0, duration: 0.24, ease: "power3.out" }}, {start:.2f});')
@@ -476,8 +632,23 @@ def build_proof(beats, width, height):
         anims.append(f'      tl.set("#{bid} .inner", {{ yPercent: -100 }}, {end:.2f});')
 
         if b.get("action") == "scroll":
-            y0 = clamp_pan(-px(float(b.get("from_y", 0))))
-            y1 = clamp_pan(-px(float(b.get("to_y", 0))))
+            # A desktop page shown at frame width puts body text at a few
+            # pixels a line on a phone — unreadable, which makes the whole
+            # beat decorative. `scale` scrolls the page zoomed in instead.
+            sc = max(1.0, float(b.get("scale", 1.0)))
+            focus_x = float(b.get("focus_x", 0.5))
+            x = min(0.0, (width - width * sc) * focus_x)
+
+            def pan_y(css_y):
+                y = -px(css_y) * sc
+                if shown_h * sc <= height:
+                    return rest_y(sc)
+                return max(min(y, 0.0), height - shown_h * sc)
+
+            y0, y1 = pan_y(float(b.get("from_y", 0))), pan_y(float(b.get("to_y", 0)))
+            anims.append(
+                f'      tl.set("#{bid}pan", {{ transformOrigin: "0px 0px", '
+                f'scale: {sc:.3f}, x: {x:.0f} }}, {start:.2f});')
             anims.append(
                 f'      tl.fromTo("#{bid}pan", {{ y: {y0:.0f} }}, '
                 f'{{ y: {y1:.0f}, duration: {dur:.2f}, ease: "none" }}, {start:.2f});')
@@ -504,7 +675,10 @@ def build_proof(beats, width, height):
                 y = height / 2 - cy * sc
                 # Keep the image covering the frame at this scale.
                 x = max(min(x, 0.0), min(0.0, width - width * sc))
-                y = max(min(y, 0.0), min(0.0, height - shown_h * sc))
+                if shown_h * sc <= height:
+                    y = rest_y(sc)
+                else:
+                    y = max(min(y, 0.0), min(0.0, height - shown_h * sc))
                 return x, y
 
             x0, y0 = place(1.0)
@@ -556,7 +730,7 @@ def split_windows(cards):
     """Times when a half-screen card is on screen."""
     return [(float(c["start"]), float(c["start"]) + float(c["duration"]))
             for c in (cards or [])
-            if c.get("style") != "band" and not c.get("full")]
+            if c.get("style") not in {"band", "logo"} and not c.get("full")]
 
 
 def full_windows(cards):
@@ -569,8 +743,63 @@ def full_windows(cards):
             for c in (cards or []) if c.get("full")]
 
 
+def build_panels(panels, face_half_y, split_top=50.0):
+    """Top-half B-roll, composited here rather than in a later ffmpeg pass.
+
+    Overlaying panels after the render meant cropping the finished frame and
+    pasting it back, which silently dropped the caption layer — the captions
+    live below the crop window, so they vanished for every second a panel was
+    up. Compositing here keeps captions on top, repositions the face exactly
+    the way a half-card does, and saves a whole re-encode."""
+    clips, anims = [], []
+    top_pct = max(30.0, min(55.0, float(split_top)))
+    face_pct = 100.0 - top_pct
+    FULL = 'top: "0px", height: "100%", objectPosition: "50% 50%"'
+    HALF = (f'top: "{top_pct:.1f}%", height: "{face_pct:.1f}%", '
+            f'objectPosition: "50% {face_half_y:.0f}%"')
+
+    for i, ov in enumerate(panels):
+        start, end = float(ov["start"]), float(ov["end"])
+        dur = end - start
+        pid = f"panel{i}"
+        if ov.get("full"):
+            # Cutaway: the panel owns the frame the way the proof beats do.
+            # The scrim is a separate element because a <video>'s own
+            # background does not paint in the render — letterbox bars showed
+            # the face through them, which reads as a compositing bug.
+            clips.append(
+                f'      <div id="{pid}bg" class="clip" data-start="{start:.2f}" '
+                f'data-duration="{dur:.2f}" data-track-index="{TRACK_PANEL + 2 * i}">\n'
+                f'        <div class="inner" style="position:absolute;top:0;left:0;'
+                f'width:100%;height:100%;background:#0d0d10;"></div>\n'
+                f'      </div>')
+            clips.append(
+                f'      <video id="{pid}" class="clip" muted '
+                f'src="{html.escape(Path(ov["file"]).name)}"\n'
+                f'             data-start="{start:.2f}" data-duration="{dur:.2f}" '
+                f'data-track-index="{TRACK_PANEL + 2 * i + 1}"\n'
+                f'             style="position:absolute;top:0;left:0;width:100%;'
+                f'height:100%;object-fit:cover;object-position:'
+                f'{float(ov.get("focus_x", 0.5)) * 100:.0f}% '
+                f'{float(ov.get("focus_y", 0.5)) * 100:.0f}%;"></video>')
+            continue
+        # `muted` is a boolean attribute — present means muted, which is what
+        # a panel wants: the OG reel's own audio must never reach the mix.
+        clips.append(
+            f'      <video id="{pid}" class="clip" muted '
+            f'src="{html.escape(Path(ov["file"]).name)}"\n'
+            f'             data-start="{start:.2f}" data-duration="{dur:.2f}" '
+            f'data-track-index="{TRACK_PANEL + 2 * i}"\n'
+            f'             style="position:absolute;top:0;left:0;width:100%;'
+            f'height:{top_pct:.1f}%;object-fit:cover;"></video>')
+        anims.append(f'      tl.set("#face", {{ {HALF} }}, {start:.2f});')
+        anims.append(f'      tl.set("#face", {{ {FULL} }}, {end:.2f});')
+    return clips, anims
+
+
 def build_html(video_name, width, height, duration, chunks, profile, beats=None,
-               sounds=None, cards=None, face_half_y=30.0, studio_dir="."):
+               sounds=None, cards=None, face_half_y=30.0, studio_dir=".",
+               panels=None):
     esc = html.escape
     clips, anims = [], []
 
@@ -586,17 +815,29 @@ def build_html(video_name, width, height, duration, chunks, profile, beats=None,
         f'             style="position:absolute;top:0;left:0;width:100%;height:100%;'
         f'object-fit:cover;"></video>')
 
-    card_clips, card_anims = build_cards(cards or [], width, height, face_half_y,
-                                        studio_dir)
+    split_top = float(profile.get("split_top", 50))
+    # Panels first so a card that shares the beat draws over them.
+    panel_clips, panel_anims = build_panels(panels or [], face_half_y, split_top)
+    clips += panel_clips
+    anims += panel_anims
+
+    card_clips, card_anims = build_cards(
+        cards or [], width, height, face_half_y, studio_dir,
+        split_top=split_top)
     clips += card_clips
     anims += card_anims
 
-    proof_clips, proof_anims = build_proof(beats or [], width, height)
+    proof_clips, proof_anims = build_proof(beats or [], width, height,
+                                          face_half_y, split_top)
     clips += proof_clips
     anims += proof_anims
     clips += build_sfx(sounds or [])
 
-    splits = split_windows(cards)
+    splits = (split_windows(cards)
+              + [(float(o["start"]), float(o["end"]))
+                 for o in (panels or []) if not o.get("full")]
+              + [(float(b["start"]), float(b["start"]) + float(b["duration"]))
+                 for b in (beats or []) if b.get("split")])
     fulls = full_windows(cards)
     for i, c in enumerate(chunks):
         cid = f"cap{i}"
@@ -695,6 +936,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--studio", default="studio")
     ap.add_argument("--video", default=None, help="defaults to the graded cut, else cut.mp4")
+    ap.add_argument("--low-memory", action="store_true",
+                    help="stream frames instead of writing them all to disk")
     ap.add_argument("--proof", default=None,
                     help="proof.json: scroll / zoom / highlight beats over captured pages")
     ap.add_argument("--render", action="store_true")
@@ -730,6 +973,14 @@ def main():
     if cards_path.is_file():
         cards = json.loads(cards_path.read_text()).get("cards", [])
 
+    panels = []
+    broll_path = studio / "broll.json"
+    if broll_path.is_file():
+        panels = json.loads(broll_path.read_text()).get("overlays", [])
+        for o in panels:
+            f = Path(o["file"])
+            o["file"] = str(f if f.is_absolute() else studio / f)
+
     sounds = []
     sfx_path = studio / "sfx.json"
     if sfx_path.is_file():
@@ -751,9 +1002,14 @@ def main():
         f = Path(s_["file"])
         if f.is_file():
             shutil.copy2(f, comp / f.name)
+    for o in panels:
+        f = Path(o["file"])
+        if f.is_file():
+            shutil.copy2(f, comp / f.name)
     for c in cards:
-        if c.get("icon"):
-            ic = Path(c["icon"])
+        for ref in ([c["icon"]] if c.get("icon") else []) + \
+                   [g["icon"] for g in (c.get("logos") or []) if g.get("icon")]:
+            ic = Path(ref)
             if not ic.is_absolute():
                 ic = studio / "assets" / "icons" / ic
             if ic.is_file():
@@ -769,10 +1025,11 @@ def main():
     (comp / "index.html").write_text(
         build_html(video.name, width, height, duration, chunks, profile, beats,
                    sounds, cards, float(profile.get("face_half_y", 30)),
-                   str(studio)))
+                   str(studio), panels))
 
-    print(f"{len(chunks)} captions · {len(cards)} card(s) · {len(beats)} proof · "
-          f"{len(sounds)} sound(s) over {duration:.1f}s · {width}x{height}")
+    print(f"{len(chunks)} captions · {len(cards)} card(s) · {len(panels)} panel(s) · "
+          f"{len(beats)} proof · {len(sounds)} sound(s) over {duration:.1f}s · "
+          f"{width}x{height}")
     print(f"-> {comp / 'index.html'}")
 
     if args.check:
@@ -789,8 +1046,19 @@ def main():
         print("\nrendering…")
         out = studio / "out"
         out.mkdir(parents=True, exist_ok=True)
-        r = subprocess.run(["npx", "--yes", HYPERFRAMES_PKG, "render", ".",
-                            "-o", str((out / "master.mp4").resolve())],
+        # Defaults cost real quality on a talking head: `standard` quality is
+        # a visibly softer encode, and `auto` frame extraction hands Chrome
+        # JPEGs of the source video, so the face is generation-lossed before
+        # a single overlay is drawn.
+        # A 9:16 minute of PNG frames wants tens of GB of scratch space, and
+        # the render only discovers that a quarter of the way in. Streaming
+        # the frames costs time, not quality.
+        cmd = ["npx", "--yes", HYPERFRAMES_PKG, "render", ".",
+               "-q", "high", "--crf", "16",
+               "--video-frame-format", "png"]
+        if args.low_memory:
+            cmd.append("--low-memory-mode")
+        r = subprocess.run(cmd + ["-o", str((out / "master.mp4").resolve())],
                            cwd=comp, capture_output=True, text=True, errors="replace")
         print((r.stdout or "")[-800:].strip() or (r.stderr or "")[-800:])
         if r.returncode != 0:
