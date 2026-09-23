@@ -42,6 +42,32 @@ def dst_ar_wider(src_w, src_h, tw, th):
     return (tw / th) > (src_w / src_h)
 
 
+def variant_filter(src_w, src_h, tw, th, focus=0.5):
+    """ffmpeg filter that turns the master into one platform variant.
+
+    Same aspect: a plain scale. Taller/narrower target: crop, biased by
+    `focus` because faces sit high in frame. Wider target: never crop — a
+    9:16 face cropped to 16:9 loses the head — fill the sides with a blurred
+    copy of the same frame instead."""
+    src_ar, dst_ar = src_w / src_h, tw / th
+    if abs(src_ar - dst_ar) < 0.01:
+        return f"scale={tw}:{th}:flags=lanczos", "scaled"
+    if dst_ar < src_ar:                      # target is narrower: crop sides
+        cw = max(2, int(round(src_h * dst_ar / 2)) * 2)
+        return (f"crop={cw}:{src_h}:(iw-{cw})/2:0,"
+                f"scale={tw}:{th}:flags=lanczos"), "cropped"
+    if dst_ar < src_ar * 1.35:               # slightly wider: crop top/bottom
+        ch = max(2, int(round(src_w / dst_ar / 2)) * 2)
+        y = max(0, min(src_h - ch, int((src_h - ch) * focus)))
+        return (f"crop={src_w}:{ch}:0:{y},"
+                f"scale={tw}:{th}:flags=lanczos"), "cropped"
+    return (f"[0:v]split=2[bg][fg];"
+            f"[bg]scale={tw}:{th}:force_original_aspect_ratio=increase,"
+            f"crop={tw}:{th},boxblur=40:2[bgb];"
+            f"[fg]scale={tw}:{th}:force_original_aspect_ratio=decrease[fgs];"
+            f"[bgb][fgs]overlay=(W-w)/2:(H-h)/2"), "padded"
+
+
 def has_captions(studio):
     c = Path(studio) / "captions.json"
     if not c.is_file():
