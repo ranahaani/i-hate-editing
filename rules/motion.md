@@ -131,6 +131,36 @@ topic — and for the call to action.
 
 An edit where every beat is a card is a slideshow with a face attached.
 
+### Build the card in flick, not in HyperFrames
+
+When a card is the right answer, **flick is the default renderer** — it carries
+pro Remotion templates and produces a designed panel, where a plain HyperFrames
+card produces a coloured rectangle with text in it. Render each scene to
+`assets/panels/<name>.mp4` (1080x960 for a half panel, 1080x1920 for full frame)
+and reference it from `broll.json`. Reach for a raw HyperFrames card only when
+flick is unavailable or the beat is a one-line band over the face.
+
+### A card that names a product carries that product's identity
+
+Whichever renderer builds it, a card for a **named tool, repo, company or
+product** must show:
+
+1. **Its real logo.** Fetch it — `icons.py fetch <name>` for anything in
+   simple-icons, otherwise the product's own site (`/favicon.ico`, the `<link
+   rel="icon">` target, the `_next/static/media/*logo*.svg` bundle) or its
+   GitHub org avatar. A named product without its mark reads as a placeholder.
+2. **Its real colours.** Take them from the logo or the site, not from taste:
+   `icons.py` prints the official hex when it fetches; otherwise sample the
+   logo's dominant non-neutral pixel, or count hex literals in the site's HTML
+   (`curl -s <site> | grep -oE '#[0-9a-fA-F]{6}' | sort | uniq -c | sort -rn`).
+   Use a dark base from the brand with the brand hue as the accent — never a
+   flat fill of the brand colour with text dropped on it.
+
+**When neither a logo nor a site exists** — an abstract claim, a concept beat,
+a summary — fall back to the speaker's own profile palette from `profile.yml`
+(black base, `brand.accent` as the accent). Never invent a brand colour, and
+never leave a product card in a generic default.
+
 ## Easing
 
 Never `linear` — it reads as robotic in every context.
@@ -152,3 +182,25 @@ half a second early or late feels accidental.
 Get the onset of the payoff word and start the animation early enough that its
 *landing frame* coincides with the word being spoken. The default failure is
 arriving late — the move begins on the word and completes after it.
+
+---
+
+## Dwell time: 1.5s floor, 3s ceiling
+
+Everything placed on screen — a card, a panel, a cutaway, a proof zoom — stays
+up for **at least 1.5 seconds and no more than 3 seconds**.
+
+Under 1.5s the viewer registers a flicker and reads nothing. A proof shot that
+holds for 1.1s is wasted work: the page was captured, framed and animated, and
+nobody found out what it said. This is not about whether *you* can read it
+knowing what it says — it is about someone seeing it for the first time, at
+arm's length, muted.
+
+Over 3s it stops being a beat and becomes a hold. Cut back to the face, or
+change the layout, and bring it back later if it still has something to say.
+
+The one exception is the final card. A CTA can run to the end of the piece;
+there is nothing to cut back to.
+
+`beats.py` enforces both bounds and fails the render if anything falls outside
+them, so this cannot quietly rot.

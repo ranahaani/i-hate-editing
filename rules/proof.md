@@ -33,6 +33,31 @@ similar. A repo scroll from another project is fabricated evidence.
 If the real thing cannot be captured, say so and cut the beat. A missing proof
 shot costs a few seconds; a fabricated one costs trust.
 
+### Borrowed B-roll: screens only, never the other creator
+
+Clips lifted from a reference reel are usable when they show a **screen** — a
+product UI, a diagram, a dashboard. They are never usable when the other
+creator is in frame. Their face is the visual signature viewers tie to that
+account, and it reads as a stolen clip the moment it appears.
+
+Cropping the top band is not enough on its own: the creator's head enters that
+band whenever a graphic slides away. Before cutting any window, map where they
+are on camera across the whole reference, then pick windows strictly inside the
+graphic-only stretches:
+
+```bash
+ffmpeg -v error -i ref.mp4 -vf "crop=<top band>,fps=5,format=gray,signalstats,\
+metadata=print:key=lavfi.signalstats.YAVG:file=-" -f null - 2>/dev/null \
+  | grep -o "YAVG=[0-9.]*" | cut -d= -f2
+```
+
+Their room is lit differently from the graphics, so the per-frame average
+luminance separates the two cleanly: sustained runs on the graphic side of the
+threshold are the safe windows. Leave 0.2s of margin at each edge, and check a
+frame from the start AND the end of every clip you cut — the head usually
+arrives in the last few frames, which is exactly where a spot check at t=0.5
+misses it.
+
 ---
 
 ## Capture a still, not a recording
@@ -154,3 +179,29 @@ Every proof beat, before shipping:
 - **The zoom target is the thing being said**, and it is legible at that scale.
 - **The highlight covers the phrase**, not half of it and not the whole
   paragraph.
+
+---
+
+## The marker disappears on a dark page
+
+`highlight: true` draws the accent bar with `mix-blend-mode: multiply`, which
+is what makes it read as a real marker: the words stay legible through it
+instead of being covered. Multiply over a near-black capture multiplies to
+black, so the highlight renders perfectly and is invisible.
+
+On a dark page set `"highlight_style": "dark"` on the beat. That screens the
+bar instead, so it lights up and light text stays light.
+
+Check the frame. A highlight you did not look at is a highlight you do not
+have.
+
+## A wrapped headline needs `highlight_rect`
+
+A multi-line headline is a single element, so its bounding box covers every
+line. A marker drawn on that box is a slab across the whole paragraph, not a
+stroke under a phrase.
+
+Put `"highlight_rect": {"x":…, "y":…, "w":…, "h":…}` (css units, same space as
+`from_y`) on the beat and place the marker on the one line carrying the claim.
+Measure it: crop the capture at the element's box, look at it, and read the
+line's coordinates off the crop.

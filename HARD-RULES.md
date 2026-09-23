@@ -62,10 +62,19 @@ vertical video as landscape and letterboxes the entire edit, silently.
 **10. Cache transcripts per source.** Re-transcribe only when the source file
 itself changes. Immutable output of immutable input.
 
-**11. Verify a sound effect is audible, not merely un-clipped.** A file whose
-loud transient falls outside the window you play is silent in the mix while
-every level check passes. Measure the peak inside the actual window against a
-voice-only baseline. See `rules/sound.md`.
+**11. Verify a sound effect is audible by differencing, not by measuring the
+master.** A file whose loud transient falls outside the window you play is
+silent in the mix while every level check passes. But measuring the master
+*alone* cannot tell you either: wherever a sting sits under speech, the loudest
+thing in that window is the voice, so the number describes the voice and not
+the sting. `sound.py check` works this way and will report every sting on a
+talking-head mix as TOO LOUD.
+
+Measure the rendered master **against the voice-only cut** — that delta is the
+sting. Correct for the 2–3 dB the render attenuates the video's own audio by,
+measured on sting-free speech windows. A negative lift is impossible from
+addition, so if you see one you have not applied that correction. See
+`rules/sound.md`.
 
 **12. Look at the output before presenting it.** Extract frames at every cut
 boundary and at the start and end. Measure levels. A render that completed is
@@ -94,13 +103,41 @@ out of real time. A CSS transition, a timer or a `requestAnimationFrame` loop
 has no wall clock to run against, so it renders as a still — with no error and
 a plausible-looking first frame.
 
+**18. Anchor cut edges on silence, not on word onsets.** ASR word onsets land
+on the consonant, so an edge placed at the onset chops the attack off the first
+word — the edit sounds clipped even though the transcript says every word is
+present. Find the edge in the silence either side, then use the transcript only
+to decide which silences are legal boundaries. Rule 6 has the dependency the
+wrong way round when read alone; this rule governs. Padding does not fix it:
+the offset is systematic toward the consonant, not random drift, so a 50ms
+in-pad can sit entirely inside the attack.
+
+**19. Time every cue to a word onset, never to a caption chunk.** When ASR
+returns segment-level timing — which it does for every language in
+`transcribe.py`'s `NON_LATIN` set — `captions.py` divides each segment evenly
+across its words. Those positions are arithmetic, not speech. A cue placed on
+one lands up to 1.4s away from the word it illustrates, and the error is
+invisible in every file: the transcript reads correctly and the chunk times
+look plausible. Re-derive onsets with `whisper-cli --dtw` per segment
+(a whole-file DTW pass smears across cut seams) and verify a few by
+transcribing the slice on its own.
+
+**20. A panel composited after the render loses the layers above it.** Cropping
+a finished frame and pasting it back drops anything outside the crop window —
+captions sit below it, so they vanish for exactly as long as the panel is up,
+and nothing warns. Composite B-roll in the composition, where the caption layer
+still draws on top.
+
 ---
 
 Rules 1–7 and 10 are adapted from [browser-use/video-use](https://github.com/browser-use/video-use)
-(MIT), which isolated these production-correctness traps cleanly. Rules 8, 9,
-11, 12 and 13 come from failures observed in this project.
+(MIT), which isolated these production-correctness traps cleanly.
+Rules 8, 9, 11–13 and 18–20 come from failures observed in this project.
 
 Rules 15–17 govern the Remotion scene layer. Its structure — a spec
 approved before anything is built, one composition per scene, frame-driven
 motion — is adapted from [Creatorberry/flick](https://github.com/Creatorberry/flick)
 (MIT).
+
+*Rule 18 was reported by u/MRRmaker on r/ContentCreators, 2026-09-08,
+who works on a tool in this space and pointed it out unprompted.*

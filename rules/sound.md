@@ -36,6 +36,32 @@ pre-amplification, not trimming.
 check validates that the audio element exists. It cannot tell you whether a
 human would hear it. Measure the final file.
 
+**Measure by differencing, not by reading the master.** Hard rule 11. Wherever
+a sting sits under speech, the loudest thing in that window is the voice, so a
+level taken from the master describes the voice and not the sting.
+`scripts/sound.py check` works this way: on a talking-head mix it reports every
+sting as TOO LOUD, and following it once cut 26 stings by ~6 dB into silence
+while its own arithmetic said they were too loud.
+
+The honest measurement is the master **minus** the voice-only cut:
+
+1. `compose.py` attenuates the video's own audio by 2–3 dB when other tracks
+   are present. Measure that first: `mean_volume` over three or four sting-free
+   speech windows in both files, averaged.
+2. Per sting: `lift = (master_peak + attenuation) - cut_peak`, over a 0.25s
+   window starting 0.05s before the hit.
+3. Target a **+3 to +5 dB mean lift**, with nothing below +1 or above +9.
+
+A negative lift is physically impossible from addition. Seeing one means step 1
+was skipped.
+
+**Do not aim at a `data-volume` number.** It is not comparable across assets
+with different normalisation — a 0.65 on a pre-boosted file and a 0.65 on a raw
+one deliver very different levels. Measure the lift instead.
+
+**Master the finished mix to −15 LUFS** with linear `loudnorm`. The render
+lands 2–3 dB under the cut, which reads quiet next to other reels.
+
 ---
 
 ## Levels
@@ -52,6 +78,14 @@ Absolute targets, measured on the finished mix:
 These sit alongside the relative rule below, they do not replace it: a
 transient at −12 dBFS still reads 3–5 dB above *typical* speech, because
 typical speech sits well under its own peaks.
+
+**Measure that baseline on a voice-only moment, not on the file mean.**
+`volumedetect`'s `mean_volume` averages in every silence and every gap, so it
+reads several dB below actual speech. Calibrating "+4 dB over typical voice"
+against the file mean puts the stings *under* real speech, which is how the
+2026-09-09 google-ai-tools mix passed its own arithmetic and still came back
+from the creator as flat. Take a 1–2s window of continuous speech, measure
+that, and size the transients off it.
 
 **Transients ride above the voice. Beds sit under it.**
 
@@ -96,6 +130,42 @@ on it.
 **Frame-perfect or it feels disconnected.** The sound's *peak* — not its start
 — lands within about two frames of the visual it marks. Back-shift the start so
 the loud part, not the silent lead-in, coincides with the picture.
+
+---
+
+## Reference mix
+
+When in doubt, match a reel that landed rather than an abstract target.
+
+**gnhf / "good night, have fun" (2026-09-06) — judged good by the creator:**
+
+| | gnhf (good) | google-ai-tools v10 (flat) |
+|---|---|---|
+| stings | 26 in 36.1s (0.72/s) | 27 in 47.8s (0.56/s) |
+| `data-volume` | 0.45–0.85, mean **0.65** | 0.25–0.37, mean **0.33** |
+| distinct categories | 8 | 4 |
+| programme loudness | −15.2 LUFS | −11.7 LUFS |
+
+Roughly 6 dB less sting against a 3.5 dB louder voice: a ~9.5 dB worse
+sting-to-voice ratio. That gap, not absolute level, is what gets heard as "the
+old one sounded better". Start at mean `data-volume` ≈ 0.65 and keep programme
+loudness nearer −15 LUFS than −12.
+
+gnhf also spent eight roles from the table in "Semantics" below, where v10 used
+four and never touched `glitch` or `click`, the two that mark screen cuts and
+list rows. **Range of roles is what to copy from it — not its sting count.**
+
+**Do not sting a hard cut that a card already covers.** `sfx.py` fires a whoosh
+on the cut *and* another on the card arriving 0.12s later, so a reel with six
+card beats ends up with twelve near-identical whooshes and a creator asking why
+it is all whoosh. Drop the cut's, keep the card's. Reported on 2026-09-14:
+26 sounds → 21, whoosh+swoosh 15 → 6, and the piece got *more* varied, not less
+paced.
+
+Give each sting a job instead: pop for text or a keyword arriving, whoosh for
+something sliding in, swoosh for a graphic leaving, glitch for cutting to a
+screen, click for interface rows, sparkle for a creative reveal, impact for the
+single biggest payoff.
 
 ---
 
