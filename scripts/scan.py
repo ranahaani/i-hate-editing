@@ -297,9 +297,9 @@ def setup(report, footage_dir):
                  "I'll supply colours and a font"],
                 default="Pick for me")
 
-    accent, font = "#FFE300", "Archivo Black"
+    accent, font = "#76B900", "Archivo Black"
     if brand.startswith("I'll"):
-        accent = ask("Accent colour (hex)", default="#FFE300") or "#FFE300"
+        accent = ask("Accent colour (hex)", default="#76B900") or "#76B900"
         font = ask("Display font", default="Archivo Black") or "Archivo Black"
 
     sounds = (ask("Install the sound library? (~60 free-licensed effects) (y/n)",
@@ -363,7 +363,7 @@ def main():
     ap.add_argument("--lang", default="en", help="ISO language code, with --defaults")
     ap.add_argument("--format", default="short",
                     choices=["short", "youtube", "both"], help="with --defaults")
-    ap.add_argument("--accent", default="#FFE300", help="brand accent, with --defaults")
+    ap.add_argument("--accent", default="#76B900", help="brand accent, with --defaults")
     ap.add_argument("--font", default="Archivo Black", help="display font, with --defaults")
     args = ap.parse_args()
 

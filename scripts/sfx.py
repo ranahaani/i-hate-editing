@@ -16,7 +16,9 @@ early enough that its loudest moment coincides with the picture.
 
 import argparse
 import json
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -30,6 +32,20 @@ MIN_GAP = 0.25               # two stings closer than this mush together
 LEAD = 0.05                  # ~1.5 frames at 30fps
 
 DEFAULT_LIB = Path.home() / ".i-hate-editing" / "sfx"
+TAXONOMY = Path(__file__).resolve().parent.parent / "assets" / "sfx-taxonomy.json"
+
+# Designed hook sound: one low hit inside the window Instagram's skip rate
+# measures. A working default to test, not a proven result.
+HOOK_WINDOW = 1.5            # the first visual event must fall inside this
+HOOK_MIN_AT = 0.15           # a hit before this cannot be placed peak-first
+HOOK_CLEAR = 0.6             # nothing else within this of the hit (feedback_reel_sound_outside_hyperframes)
+HOOK_ONSET_LAG = 0.15        # fallback: hit this long after the first word
+CAPTION_LATE_BIAS = 0.08     # captions.py starts chunks this late after onset
+HOOK_HIT_PRE = 0.10          # attack kept ahead of the peak when trimming
+HOOK_HIT_LEN = 0.55          # = HOOK_HIT_PRE + the 0.45s tail place() plays
+HOOK_HIT_FADE = 0.20
+HOOK_SOURCE_FALLBACK = "impact"   # hook_open reuses the impact files
+HOOK_SOURCE_MAX_PEAK = 1.0        # a swell that peaks later is a riser, not a hit
 
 # A transient whose loud moment sits seconds into the file cannot mark a beat:
 # aligning its peak would start it far earlier than the cut, so it plays a long
@@ -98,6 +114,109 @@ def analyse(path, cache):
                       "peak_db": pk, "file_peak_db": full}
     c = cache[key]
     return c["peak_at"], c["duration"], c
+
+
+def first_visual_event(times, window=HOOK_WINDOW):
+    """The earliest visual change inside the hook window, or None."""
+    inside = [float(t) for t in times if 0.0 <= float(t) <= window]
+    return min(inside) if inside else None
+
+
+def hook_open_event(visual_times, post_hook_at=None, word_onset=None):
+    """Where the hook-open hit lands, or (None, reason) when it should not.
+
+    Rule, from what the pipeline actually records:
+      1. Anchor to the earliest visual event in the first HOOK_WINDOW seconds:
+         a seam (jump cut), a card, a b-roll overlay or a proof beat. The
+         per-range micro-zoom is not written to timeline.json, so it cannot
+         anchor anything.
+      2. With no visual event, fall back to HOOK_ONSET_LAG after the first
+         spoken word. This is an unverified default, flagged in the output;
+         rules/hooks.md says to add a disruption rather than rely on it.
+      3. Skip when the post-hook riser/impact lands within HOOK_CLEAR of the
+         anchor: that impact already carries the moment, and two low hits
+         that close mush together (one role per sting).
+    The hit never lands before HOOK_MIN_AT, so its peak can be placed ahead of
+    the picture without starting before the timeline.
+    """
+    visual = first_visual_event(visual_times)
+    if visual is not None:
+        at, why = visual, "hook open (first visual event)"
+    elif word_onset is not None and word_onset + HOOK_ONSET_LAG <= HOOK_WINDOW:
+        at, why = word_onset + HOOK_ONSET_LAG, "hook open (first word, no visual event)"
+    else:
+        return None, "no visual event or spoken word inside the first 1.5s"
+    at = max(at, HOOK_MIN_AT)
+    if post_hook_at is not None and abs(post_hook_at - at) < HOOK_CLEAR:
+        return None, (f"post-hook impact at {post_hook_at:.2f}s already covers "
+                      f"the hook open at {at:.2f}s")
+    return {"at": at, "category": "hook_open", "why": why, "mandatory": True}, None
+
+
+def apply_hook_open(events, hook):
+    """Add the hook-open hit and clear everything else within HOOK_CLEAR of it.
+
+    One role per sting: the cut's whoosh, the card's whoosh and a pop landing
+    with the hook are the same moment, so the hit replaces them rather than
+    stacking. It is mandatory, so it counts against the density budget
+    instead of being thinned; the sound it replaces was mandatory too, so the
+    reel's sound count does not grow.
+    """
+    if hook is None:
+        return list(events)
+    kept = [e for e in events if abs(e["at"] - hook["at"]) >= HOOK_CLEAR]
+    return sorted(kept + [hook], key=lambda e: e["at"])
+
+
+def taxonomy_spec(category):
+    """volume and track for a category, from the taxonomy."""
+    tax = json.loads(TAXONOMY.read_text())
+    for group in tax["groups"].values():
+        if category in group["categories"]:
+            return group["categories"][category]
+    return {}
+
+
+def pick_hook_open(library, index, cache):
+    """The hook-open source: the impact file whose hit comes earliest.
+
+    A single low hit wants the file that reaches its peak soonest; a longer
+    lead-in is a swell, which belongs to the riser. Files come from the
+    hook_open category when installed, otherwise from impact."""
+    spec = taxonomy_spec("hook_open")
+    root = Path(library).expanduser()
+    files = []
+    for cat in ("hook_open", HOOK_SOURCE_FALLBACK):
+        entry = index.get(cat)
+        files = [Path(f["file"]) for f in (entry or {}).get("files", [])
+                 if Path(f["file"]).is_file()]
+        files = files or sorted((root / cat).glob("*.mp3"))
+        if files:
+            break
+    scored = [(analyse(f, cache)[0], f) for f in files]
+    scored = [x for x in scored if x[0] <= HOOK_SOURCE_MAX_PEAK]
+    if not scored:
+        return None, None, None
+    _, best = min(scored, key=lambda x: x[0])
+    return best, spec.get("volume"), spec.get("track")
+
+
+def trim_hit(src, peak_at, dest_dir):
+    """Cut the hit out of its source so the peak sits HOOK_HIT_PRE in.
+
+    Library impacts carry a lead-in; placing one with a hit near t=0 would
+    start before the timeline. Trimming the loud part into its own short asset
+    is the fix rules/sound.md prescribes."""
+    dest_dir = Path(dest_dir)
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest = dest_dir / f"hook_open-{Path(src).stem}.mp3"
+    start = max(0.0, peak_at - HOOK_HIT_PRE)
+    subprocess.run(
+        ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+         "-ss", f"{start:.3f}", "-i", str(src), "-t", f"{HOOK_HIT_LEN:.3f}",
+         "-af", f"afade=t=out:st={HOOK_HIT_LEN - HOOK_HIT_FADE:.3f}:d={HOOK_HIT_FADE:.3f}",
+         str(dest)], check=True)
+    return dest, peak_at - start
 
 
 def place(hit_at, path, cache):
@@ -199,6 +318,23 @@ def main():
 
     events.sort(key=lambda e: e["at"])
 
+    # Hook open: one low hit on the first visual event of the hook.
+    def read(name, key):
+        p = studio / name
+        return json.loads(p.read_text()).get(key, []) if p.is_file() else []
+
+    visual = (list(seams)
+              + [float(c["start"]) for c in read("cards.json", "cards")]
+              + [float(o["start"]) for o in read("broll.json", "overlays")]
+              + [b["start"] for b in beats])
+    chunks = read("captions.json", "chunks")
+    onset = float(chunks[0]["start"]) - CAPTION_LATE_BIAS if chunks else None
+    post_hook = seams[0] if seams else None
+    hook, skipped = hook_open_event(visual, post_hook, onset)
+    if skipped:
+        print(f"  hook open skipped: {skipped}")
+    events = apply_hook_open(events, hook)
+
     # Resolve collisions. The forbidden stack is pop+impact — they mush into
     # one distorted blob. Riser+impact is the opposite: the riser is *meant* to
     # resolve into the impact, so that pair is always allowed to share a moment.
@@ -245,8 +381,17 @@ def main():
 
     index = load_index(args.library)
     cache, out, missing, used = {}, [], set(), {}
+    assets = Path(tempfile.mkdtemp(prefix="sfx_assets_")) if args.dry_run \
+        else studio.resolve() / "sfx_assets"
     for e in kept:
-        f, vol, track = pick(args.library, e["category"], index, used)
+        if e["category"] == "hook_open":
+            f, vol, track = pick_hook_open(args.library, index, cache)
+            if f:
+                f, peak_in = trim_hit(f, analyse(f, cache)[0], assets)
+                cache[str(f)] = {"peak_at": peak_in, "duration": HOOK_HIT_LEN,
+                                 "peak_db": None, "file_peak_db": None}
+        else:
+            f, vol, track = pick(args.library, e["category"], index, used)
         if not f:
             missing.add(e["category"])
             continue

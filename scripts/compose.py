@@ -60,7 +60,7 @@ def caption_css(profile, width):
     # and collar land inside the bottom half, so it is read from profile.yml
     # (caption_split_bottom) rather than fixed. 52 keeps the old behaviour.
     split_bottom = float(profile.get("caption_split_bottom", 52))
-    accent = (profile.get("brand") or {}).get("accent", "#FFE300")
+    accent = (profile.get("brand") or {}).get("accent", "#76B900")
     # Named fallbacks like Impact are not in the renderer's auto-resolved font
     # list, so they fail the font_family_without_font_face check and would
     # silently render with wrong typography. Only a generic family follows.
@@ -103,7 +103,7 @@ def caption_css(profile, width):
 
 
 def proof_css(profile):
-    accent = (profile.get("brand") or {}).get("accent", "#FFE300")
+    accent = (profile.get("brand") or {}).get("accent", "#76B900")
     return f"""
       .proofwin {{
         position: absolute; top: 0; left: 0;
@@ -146,7 +146,7 @@ def is_light(colour):
 
 
 def card_css(profile, width):
-    accent = (profile.get("brand") or {}).get("accent", "#FFE300")
+    accent = (profile.get("brand") or {}).get("accent", "#76B900")
     font = (profile.get("brand") or {}).get("font", "Archivo Black")
     band_y = float(profile.get("band_y", 58))
     split_top = max(30.0, min(55.0, float(profile.get("split_top", 50))))

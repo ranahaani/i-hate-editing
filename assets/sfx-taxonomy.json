@@ -65,6 +65,10 @@
           "when": "The hook lands, or a major realisation is stated.",
           "mixkit": "impact", "peak_db": -10, "volume": 0.80, "track": 34
         },
+        "hook_open": {
+          "when": "Anchors the first visual change of the hook: the first jump cut, card or graphic in the first 1.5s. A single low hit, no whoosh stack. Replaces any other sound on that moment. Reuses the impact files, trimmed to the hit.",
+          "mixkit": "impact", "peak_db": -12, "volume": 0.55, "track": 35
+        },
         "riser": {
           "when": "Building into a reveal or a punchline.",
           "mixkit": "riser", "peak_db": -11, "volume": 0.85, "track": 36

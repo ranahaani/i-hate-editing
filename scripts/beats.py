@@ -85,6 +85,11 @@ def main():
         events.append((float(o["start"]), kind, name))
         dwell.append((name, kind, float(o["start"]),
                       float(o["end"]) - float(o["start"])))
+        # A capture of the real page counts as proof wherever it is authored.
+        # Proof rendered ahead of time as a panel is still the page on screen,
+        # and the gate below is asking whether the artifact was SHOWN.
+        if o.get("proof"):
+            events.append((float(o["start"]), "proof", name))
     for b in load(studio / "proof.json", "beats"):
         label = f"{b.get('action')} {b.get('target') or ''}".strip()
         events.append((float(b["start"]), "proof", label))

@@ -24,6 +24,8 @@ from pathlib import Path
 
 VIEWPORT = (390, 844)      # vertical: reels and shorts
 DPR = 3
+DEVICE = "iPhone 14"
+MAX_MOBILE_WIDTH = 500
 
 
 def rank_js():
@@ -77,9 +79,20 @@ def main():
     ap.add_argument("--height", type=int, default=VIEWPORT[1])
     ap.add_argument("--dpr", type=int, default=DPR)
     ap.add_argument("--wait", type=float, default=3.0)
+    ap.add_argument("--desktop", action="store_true",
+                    help="desktop browser, no mobile emulation (breaks rules/proof.md in 9:16)")
     ap.add_argument("--keep-overlays", action="store_true",
                     help="keep sticky/fixed elements (cookie bars, nav)")
     args = ap.parse_args()
+
+    if args.desktop:
+        print("warning: desktop capture in a 9:16 piece violates rules/proof.md",
+              file=sys.stderr)
+    elif args.width > MAX_MOBILE_WIDTH:
+        print(f"error: --width {args.width} is not a mobile viewport (max {MAX_MOBILE_WIDTH}). "
+              "9:16 proof must be captured in mobile emulation; pass --desktop only "
+              "if you deliberately accept breaking rules/proof.md.", file=sys.stderr)
+        return 1
 
     try:
         from playwright.sync_api import sync_playwright
@@ -96,8 +109,14 @@ def main():
 
     with sync_playwright() as p:
         browser = p.chromium.launch()
-        page = browser.new_page(viewport={"width": args.width, "height": args.height},
-                                device_scale_factor=args.dpr)
+        context_opts = {"viewport": {"width": args.width, "height": args.height},
+                        "device_scale_factor": args.dpr}
+        if not args.desktop:
+            device = p.devices[DEVICE]
+            context_opts.update(user_agent=device["user_agent"],
+                                is_mobile=device["is_mobile"],
+                                has_touch=device["has_touch"])
+        page = browser.new_context(**context_opts).new_page()
         try:
             page.goto(args.url, wait_until="domcontentloaded", timeout=60000)
         except Exception as e:
@@ -105,6 +124,23 @@ def main():
             browser.close()
             return 1
         page.wait_for_timeout(int(args.wait * 1000))
+
+        probe = page.evaluate("""() => ({
+          ua: navigator.userAgent,
+          screenWidth: screen.width,
+          innerWidth: window.innerWidth,
+          coarse: matchMedia('(pointer: coarse)').matches,
+          touch: navigator.maxTouchPoints > 0,
+        })""")
+        emulated = ("Mobile" in probe["ua"] and probe["screenWidth"] <= MAX_MOBILE_WIDTH
+                    and probe["coarse"] and probe["touch"])
+        print(f"emulation: mobile={emulated} screen={probe['screenWidth']} innerWidth={probe['innerWidth']} "
+              f"pointer-coarse={probe['coarse']} touch={probe['touch']} ua={probe['ua'][:60]}")
+        if not args.desktop and not emulated:
+            print("error: mobile emulation did not take effect; refusing to capture",
+                  file=sys.stderr)
+            browser.close()
+            return 1
 
         if not args.keep_overlays:
             # Sticky headers and cookie bars repeat down the whole tall capture,
@@ -140,6 +176,7 @@ def main():
     meta.write_text(json.dumps({
         "url": args.url, "title": title,
         "image": str(png.resolve()),
+        "mobile": not args.desktop, "user_agent": probe["ua"],
         "viewport": [args.width, args.height], "dpr": args.dpr,
         "page_size": [page_w, page_h],
         "image_size": [page_w * args.dpr, page_h * args.dpr],
