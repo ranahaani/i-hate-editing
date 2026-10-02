@@ -130,7 +130,30 @@ machine's IP changes with the network anyway. **STOP.** Do not build captions,
 motion or sound on an unapproved cut — every downstream timestamp depends on
 it, and a base-cut change invalidates all of them.
 
-**9 — Enrich.** In order:
+**9 — Enhance the voice.** Every reel, right after the cut is approved and
+before any sound effect is placed:
+
+```bash
+python3 scripts/enhance.py <studio>/cut.wav -o <studio>/voice_enhanced.wav
+```
+
+It runs Adobe Podcast Enhance Speech v2 through the signed-in ego-browser
+session (upload, poll, download the stems) and mixes the website's default
+"Speech 50%, Background 10%, Music 10%" locally. About 30s for a short reel.
+Then:
+
+1. Level it: `acompressor=threshold=0.045:ratio=3.2:attack=6:release=110:makeup=1`,
+   then gain and `alimiter=limit=0.7` to land near -18.4 LUFS. Boosting it plain
+   to -15 LUFS pushes speech into the limiter and every sting collapses.
+2. Remux it as the cut's audio (`-c:v copy`), so no video re-render is needed and
+   every timestamp holds. The script fails if the duration drifts over 50 ms.
+3. Place stings and mix against this enhanced voice, not the raw take.
+
+If it prints `NOT_SIGNED_IN`, ask the user to sign in to podcast.adobe.com in
+ego-browser. Never type credentials. Use `--mix full` only when asked; 100%
+enhanced speech sounds processed.
+
+**10 — Enrich.** In order:
 
 ```bash
 python3 scripts/grade.py    cut.mp4 --strength normal   # look at the comparison
@@ -192,7 +215,7 @@ You author four files by hand, the same way you author the EDL. They are the
 edit; the scripts only render them.
 
 **`cards.json`** — the motion vocabulary. Without it the piece is a face with
-captions, and `beats.py` will fail step 10.
+captions, and `beats.py` will fail step 11.
 
 ```json
 {"cards": [
@@ -274,14 +297,14 @@ language: ur
 translate_captions: true
 aspects: ["9:16"]
 pacing: punchy            # punchy | balanced | restrained
-brand: {accent: "#FFE300", font: "Archivo Black"}
+brand: {accent: "#76B900", font: "Archivo Black"}
 transcription: {model: large-v3-turbo}
 face_half_y: 30           # vertical crop of the face in a split
 ```
 
 This is where a trimmed recording becomes an edited video.
 
-**10 — Verify the render.** *Gate.* Frames and levels, again, plus the beat
+**11 — Verify the render.** *Gate.* Frames and levels, again, plus the beat
 map:
 
 ```bash
@@ -292,7 +315,7 @@ python3 scripts/sound.py check out/master.mp4   # stings audible, not just prese
 A shot that sits still is the most-reported defect in short-form and the
 easiest to miss, because nothing errors when a face holds for ten seconds.
 
-**11 — Deliver the package.**
+**12 — Deliver the package.**
 
 ```bash
 python3 scripts/music.py   out/master.mp4 <bed>.mp3 -o out/final.mp4
@@ -305,7 +328,7 @@ at the thumbnail candidates and pick one. Neither is generated: a generated
 title reads like a generated title, and "face clear, eyes open" is not a
 metric.
 
-**12 — Learn.** Record every correction the user made, phrased as an
+**13 — Learn.** Record every correction the user made, phrased as an
 instruction for next time and filed under the area it affects:
 
 ```bash
@@ -351,6 +374,35 @@ back:
 - **Thumbnail frame** — pulled from the cut, face visible, no mid-blink
 - **Title options** — a small set to choose from
 
+## House style
+
+Locked on the NVIDIA and Promptive reels (2026-10-02). Apply it by default; the
+details and the reasons are in the rules files named.
+
+- **Hook, 0 to about 3.4s** (`rules/hooks.md`, "The split-proof hook"):
+  - Split from frame 0, with an HD visual on top and the face below.
+  - Text: 2-3 familiar words plus one emoji ("CLAUDE / LIMIT ISSUE 😕").
+  - The top panel changes once at 1.0-1.3s.
+  - Named tools' marks pop in on their spoken names.
+  - A loss word turns the whole frame red for about 0.5s.
+  - Plan it with `hook_plan.py --proof <capture>`.
+- **Everything HD:**
+  - The hook's top panel is a motion graphic built at frame resolution, never
+    an upscaled screenshot.
+  - Rebuild product screenshots as native Flick/Remotion scenes at 1080x960,
+    using the real UI's text (`rules/proof.md`).
+- **Palette:** green `#76B900` for emphasis words in captions, accents, chips
+  and borders. The ground is near-black green with a slow-drifting grid. It is
+  the profile default; a brand colour in `profile.yml` still wins.
+- **Sound:**
+  - Pop sting: `assets/sfx/pop_dragon.mp3` (peak 0.197s; start = hit - 0.197).
+  - Impact on frame 1, swoosh on a panel swap, click on a highlight.
+  - Every sting +2 to +4 dB above the enhanced voice (centre +3.1). Master at
+    -15 LUFS.
+- **Voice:** Adobe Enhance (step 9) on every reel.
+- **Cut:** transcribe the first 0.3s of every block on its own. A clipped false
+  start ("com" before "link chahiye") hides at block heads.
+
 ## Craft rules
 
 Read the relevant file before touching that part of the edit. Each rule states
@@ -367,6 +419,7 @@ the failure it prevents.
 | `rules/motion.md` | Zooms, transitions, cards, layout |
 | `rules/scenes.md` | Designed Remotion scenes: when, how, what to check |
 | `rules/framing.md` | Crops, splits, composition |
+| `rules/assets.md` | Where pictures come from: proof, reference clips, flick, generated stills, Flow |
 
 ## Anti-patterns
 

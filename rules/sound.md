@@ -50,7 +50,9 @@ The honest measurement is the master **minus** the voice-only cut:
    speech windows in both files, averaged.
 2. Per sting: `lift = (master_peak + attenuation) - cut_peak`, over a 0.25s
    window starting 0.05s before the hit.
-3. Target a **+3 to +5 dB mean lift**, with nothing below +1 or above +9.
+3. Target a **+2 to +4 dB mean lift (centre +3.1)**, with nothing below +1 or
+   above +8. On 2026-10-02 every sting was cut by 10% in amplitude (-0.9 dB)
+   because the old +3 to +5 band read as too loud next to the enhanced voice.
 
 A negative lift is physically impossible from addition. Seeing one means step 1
 was skipped.
@@ -193,6 +195,44 @@ dB just ahead of the payoff makes it land, and costs nothing.
 a short metallic hit reads as designed; the same whoosh on every cut reads as a
 preset.
 
+## The hook opener — sound inside the first 1.5 seconds
+
+The first seconds are what Instagram's Skip Rate measures (the share of
+viewers who leave within 3 seconds), and until now nothing in them was
+designed: the first sound was the voice, and the first sting came after the
+claim.
+
+Anchor the hook with one low **hook opener** — a single hit, not a whoosh
+stack — on the first visual change of the hook. Role `hook_open` in
+`assets/sfx-taxonomy.json`, placed by `hook_open_event` in `scripts/sfx.py`.
+
+- **Anchor:** the earliest seam, card, b-roll overlay or proof beat inside the
+  opening 1.5 seconds. A per-range micro-zoom is not written to
+  `timeline.json`, so it cannot anchor a hit.
+- **Fallback:** with no visual event, it lands 0.15s after the first caption
+  chunk's start (less the 0.08s caption bias), labelled "first word, no visual
+  event" in the plan. This fallback is unverified; judge it by ear.
+- **Never before 0.15s.** No anchor at all means no opener.
+- **One hit.** It removes every other sound within 0.6s of itself, including the
+  cut's and the card's whoosh, so the first 1.5s carries one sound.
+- **Skipped when the post-hook riser/impact lands within 0.6s of the anchor**
+  (an early first seam). The post-hook impact then stands alone.
+- **It is mandatory, so it counts against the density ceiling and is never
+  thinned.** It obeys "one role per sting".
+- **Measure it like every other sting**: master minus voice-only, +2 to +4 dB.
+  Measured on three clips with a plain ffmpeg sum: +3.0, +4.0, +6.5 (mean
+  +4.5). Not measured through compose or the −15 LUFS pass, so the delivered
+  mix gets the final say.
+- It is **additional to** the post-hook sting below, not a replacement for it.
+
+Status: a working default taken from creator-side sources, not a platform fact.
+Retention effect is untested. Check it against Skip Rate on posted reels before
+treating it as settled.
+
+Known issue, not fixed: when the first seam is early, the post-hook riser can
+start at 0.00 and play under the opener, with its peak not landing on its
+impact. Inspect that mix by ear.
+
 ## The post-hook sting
 
 After the opening claim, before the body begins, place a riser resolving into
@@ -218,8 +258,18 @@ Sound should mean something, not just fill space.
 | Screen recording underneath | keyboard, low |
 | Something selected or circled | click |
 | The single biggest reveal in the piece | notification, once only |
+| The hook's first visual change (first 1.5s) | `hook_open`, one low hit |
 | Building into a hero reveal | riser |
 | The reveal itself | impact |
 | Cutting to paper, receipt, document | paper tear |
 | Cutting to a screen, retro filter, glitch | glitch |
 | A key metric or tip landing | chime, paired with a held zoom |
+
+## Defaults locked 2026-10-02
+
+- **Voice first.** Run `scripts/enhance.py` (Adobe Podcast Enhance v2, site
+  mix) on the cut before placing any sting. Level the result to about
+  -18.4 LUFS with compression, then measure every sting against the enhanced
+  voice-only file.
+- **Pop sting:** `assets/sfx/pop_dragon.mp3`. Its peak is at 0.197s, so start
+  it 0.197s before the word onset it marks.

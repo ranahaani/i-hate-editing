@@ -71,8 +71,27 @@ matters, and cannot be zoomed mid-scroll. A still plus authored motion stays
 frame-accurate and re-editable, and composites in the same timeline as the
 face, captions and sound.
 
-**Capture in the delivery aspect.** Vertical viewport for reels and shorts —
-the desktop layout of most sites wastes two thirds of a 9:16 frame.
+**STRICT: a 9:16 piece is captured in real mobile view. No exceptions.**
+Every screen capture for a vertical reel or short is recorded with mobile
+emulation: mobile user agent, touch, a 390×844 viewport at device scale 3. A
+narrow desktop window is **not** mobile view: sites key their layout off the
+user agent and pointer type, so a shrunk desktop browser still serves the
+desktop page, squeezed, with truncated text and hidden elements.
+
+Why it is strict: the desktop layout of most sites wastes two thirds of a 9:16
+frame, and a squeezed desktop page looks like a mistake. This was the biggest
+recurring defect in the capture step.
+
+- `scripts/capture.py` emulates mobile by default and records `"mobile": true`
+  and the user agent in the sidecar JSON. It checks after load that emulation
+  actually took effect and fails if not.
+- Desktop capture needs the explicit `--desktop` flag and is only for a
+  16:9 or 1:1 delivery. Passing it for a 9:16 piece breaks this rule.
+- A screen recording of a real phone UI is also fine. A recording of a desktop
+  window is not.
+- Before building a zoom or highlight on a capture, confirm it is the mobile
+  layout: look at the image. A desktop capture that was scaled down passes
+  every other check and still reads as wrong.
 
 **Targets are found by text, not CSS selectors.** Selectors are per-site and
 break the moment a layout changes; mobile layouts hide half of them outright.
@@ -205,3 +224,21 @@ Put `"highlight_rect": {"x":…, "y":…, "w":…, "h":…}` (css units, same sp
 `from_y`) on the beat and place the marker on the one line carrying the claim.
 Measure it: crop the capture at the element's box, look at it, and read the
 line's coordinates off the crop.
+
+## Rebuild screenshots as HD scenes
+
+A captured screenshot scaled into the 1080x960 split panel reads as blurry; on
+2026-10-02 every panel of the Promptive reel was rejected for it. Rebuild each
+product screen as a native Flick/Remotion scene at 1080x960:
+
+- Use the real UI's own text, labels, names and numbers, copied from the
+  capture. Restyle the frame (green grid ground, green-bordered cards), not the
+  facts. Never add a state the product does not show, such as a success toast
+  or an error message that was not captured.
+- Give each scene one motion that matches the spoken line: a pointer opening a
+  menu, entries stacking in, text typing in, a counter running up.
+- Counters must reach their final value inside the panel's on-screen time,
+  measured after any cut changes. A frame that reads "2.4 rating" while the
+  value counts up gets misread.
+- Keep the capture as the source of truth in `assets/proof/`. The scene
+  replaces it on screen, not in the record.
