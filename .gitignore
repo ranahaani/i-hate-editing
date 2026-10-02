@@ -8,3 +8,8 @@ studio/
 *.mp3
 .env
 .venv/
+
+# per-user assets: face photos with uncleared licences, and the icon fetch cache
+# (index.json stores absolute local paths)
+assets/people/
+assets/icons/
