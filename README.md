@@ -17,7 +17,7 @@ by hand.
 <p align="center">
   <em>Same reel on both phones, frame for frame. Left is the cut with nothing
   added; right is what shipped.
-  <a href="docs/reels/agent-reach.mp4">Watch the full reel</a>.</em>
+  <a href="https://www.instagram.com/ranahaani.me/reels/">More reels on Instagram</a>.</em>
 </p>
 
 The skill picks the take, decides the repo and the docs page were worth
@@ -26,20 +26,13 @@ card, and where every sound lands. You say "punchier." It owns the numbers.
 
 ## Reels made with it
 
-Three recent reels, straight out of `studio/out`. Click a phone to play the
-MP4.
-
 <p align="center">
-  <a href="docs/reels/agent-reach.mp4"><img src="docs/reels/agent-reach.jpg" alt="Agent Reach reel" width="200"></a>
-  &nbsp;
-  <a href="docs/reels/strix.mp4"><img src="docs/reels/strix.jpg" alt="Strix reel" width="200"></a>
-  &nbsp;
-  <a href="docs/reels/ecc-repo.mp4"><img src="docs/reels/ecc-repo.jpg" alt="ECC repo reel" width="200"></a>
+  <a href="docs/reels/strix.mp4"><img src="docs/reels/strix.jpg" alt="Strix reel" width="220"></a>
 </p>
 
 <p align="center">
-  <em>Agent Reach · Strix · ECC. Repo cards, use-case cards, captions, sound
-  and grade all come from the skill.</em>
+  <em>Strix, straight out of <code>studio/out</code>. Click to play.
+  More on <a href="https://www.instagram.com/ranahaani.me/reels/">Instagram</a>.</em>
 </p>
 
 ## What it does
