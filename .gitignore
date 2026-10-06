@@ -3,6 +3,7 @@ __pycache__/
 .DS_Store
 studio/
 *.mp4
+!docs/reels/*.mp4
 *.mov
 *.wav
 *.mp3

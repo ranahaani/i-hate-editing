@@ -11,19 +11,36 @@ I named it after a note to myself: never hand back work that still needs fixing
 by hand.
 
 <p align="center">
-  <img src="docs/demo.gif" alt="Raw take on the left, finished reel on the right, pipeline log in a terminal below." width="820">
+  <img src="docs/demo.gif" alt="The same reel twice: the plain face-only cut on the left, the finished reel with proof cards, captions and sound on the right, pipeline log in a terminal below." width="820">
 </p>
 
 <p align="center">
-  <em>Same recording on both phones. Left is what came off the camera; right is
-  what came back.
-  <a href="https://www.instagram.com/reel/Db3VN1Boyej/">Instagram reel this
-  footage shipped as</a>.</em>
+  <em>Same reel on both phones, frame for frame. Left is the cut with nothing
+  added; right is what shipped.
+  <a href="docs/reels/agent-reach.mp4">Watch the full reel</a>.</em>
 </p>
 
 The skill picks the take, decides the repo and the docs page were worth
 capturing, where to zoom, which line gets the highlighter, what goes on each
 card, and where every sound lands. You say "punchier." It owns the numbers.
+
+## Reels made with it
+
+Three recent reels, straight out of `studio/out`. Click a phone to play the
+MP4.
+
+<p align="center">
+  <a href="docs/reels/agent-reach.mp4"><img src="docs/reels/agent-reach.jpg" alt="Agent Reach reel" width="200"></a>
+  &nbsp;
+  <a href="docs/reels/strix.mp4"><img src="docs/reels/strix.jpg" alt="Strix reel" width="200"></a>
+  &nbsp;
+  <a href="docs/reels/ecc-repo.mp4"><img src="docs/reels/ecc-repo.jpg" alt="ECC repo reel" width="200"></a>
+</p>
+
+<p align="center">
+  <em>Agent Reach · Strix · ECC. Repo cards, use-case cards, captions, sound
+  and grade all come from the skill.</em>
+</p>
 
 ## What it does
 
