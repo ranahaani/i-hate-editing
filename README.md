@@ -5,6 +5,10 @@
 [![Local](https://img.shields.io/badge/transcription-local%20whisper.cpp-brightgreen)](./install.md)
 [![No API key](https://img.shields.io/badge/cloud%20STT-not%20required-lightgrey)](./SECURITY.md)
 
+<!-- yarkr:badges:start -->
+[![Indexed on Yarkr](https://api.yarkr.com/functions/v1/api/api/v1/badges/repos/ranahaani/i-hate-editing/version.svg)](https://yarkr.com/arks/ranahaani/i-hate-editing)
+<!-- yarkr:badges:end -->
+
 Drop in raw talking-head takes. Get back something you can publish.
 
 I named it after a note to myself: never hand back work that still needs fixing
@@ -105,6 +109,38 @@ claude   # or your agent of choice
 
 It scans the machine, asks five questions, picks a Whisper model for your
 language and hardware, and starts. More in [`install.md`](./install.md).
+
+<!-- yarkr:install:start -->
+## Install with Yarkr
+
+This repo is indexed on [Yarkr](https://yarkr.com/arks/ranahaani/i-hate-editing) as the ark [ranahaani/i-hate-editing](https://yarkr.com/arks/ranahaani/i-hate-editing), so its skills install into Claude Code, Codex, Cursor and other agent harnesses with one command.
+
+### CLI
+
+Install the whole ark, which Yarkr keeps equal to this repo:
+
+```bash
+npx yarkr-cli sync ranahaani/i-hate-editing
+```
+
+Or add individual skills:
+
+```bash
+npx yarkr-cli add skill:ranahaani/i-hate-editing/i-hate-editing
+```
+
+No Node.js? `curl -fsSL https://yarkr.com/install.sh | sh` (macOS, Linux) or `irm https://yarkr.com/install.ps1 | iex` (Windows PowerShell) installs `yarkr` as a standalone binary; then type `yarkr` in place of `npx yarkr-cli`.
+
+### MCP
+
+Connect your agent to the ark over MCP:
+
+```bash
+npx yarkr-cli mcp add ranahaani/i-hate-editing
+```
+
+Or point any MCP client at `https://api.yarkr.com/functions/v1/api/mcp/o/ranahaani/i-hate-editing`.
+<!-- yarkr:install:end -->
 
 ## How it works
 
